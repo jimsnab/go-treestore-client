@@ -9,6 +9,7 @@ import (
 	"net"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/jimsnab/go-lane"
@@ -22,6 +23,7 @@ type (
 		cxn         net.Conn
 		hostAndPort string
 		inbound []byte
+		invoked atomic.Int32
 	}
 )
 
@@ -34,18 +36,43 @@ func NewTSClient(l lane.Lane) TSClient {
 	return tsc
 }
 
-func (tsc *tsClient) SetServer(host string, port int) {
+func (tsc *tsClient) close() (err error) {
+	for {
+		invoked := false
+		tsc.Lock()
+		if tsc.cxn != nil {
+			err = tsc.cxn.Close()
+			tsc.cxn = nil
+		}
+		invoked = tsc.invoked.Load() != 0
+		tsc.Unlock()
+
+		if !invoked {
+			break
+		}
+
+		time.Sleep(time.Millisecond)
+	}
+	return
+}
+
+func (tsc *tsClient) SetServer(host string, port int) {	
+	tsc.close()
+
 	tsc.Lock()
 	defer tsc.Unlock()
-
-	if tsc.cxn != nil {
-		tsc.cxn.Close()
-	}
-
 	tsc.hostAndPort = fmt.Sprintf("%s:%d", host, port)
 }
 
+func (tsc *tsClient) Close() (err error) {
+	err = tsc.close()
+	return 
+}
+
 func (tsc *tsClient) apiCall(args ...string) (response map[string]any, err error) {
+	tsc.invoked.Add(1)
+	defer tsc.invoked.Add(-1)
+
 	//
 	// Ensure connection
 	//
@@ -101,9 +128,12 @@ func (tsc *tsClient) apiCall(args ...string) (response map[string]any, err error
 	// The response will be returned in json.
 	//
 
-	buffer := make([]byte, 1024*8)
-
 	for {
+		// buffer must be allocated for each read, because tsc.inbound slice is referencing it
+		buffer := make([]byte, 1024*8)
+
+		// put a time limit on an api
+		tsc.cxn.SetReadDeadline(time.Now().Add(20 * time.Second))
 		n, err = tsc.cxn.Read(buffer)
 
 		if err != nil {
@@ -121,7 +151,7 @@ func (tsc *tsClient) apiCall(args ...string) (response map[string]any, err error
 			tsc.inbound = append(tsc.inbound, buffer[0:n]...)
 		}
 
-		tsc.l.Tracef("received %d bytes from client", len(tsc.inbound))
+		tsc.l.Tracef("received %d bytes from server", len(tsc.inbound))
 
 		var length int
 		length, response, err = tsc.parseResponse()
@@ -145,6 +175,7 @@ func (tsc *tsClient) parseResponse() (length int, response map[string]any, err e
 
 	packetSize := binary.BigEndian.Uint32(tsc.inbound)
 	if len(tsc.inbound)-4 < int(packetSize) {
+		tsc.l.Tracef("insufficient input, expecting %d bytes, have %d bytes", packetSize, len(tsc.inbound) - 4)
 		return
 	}
 
@@ -168,7 +199,7 @@ func (tsc *tsClient) SetKey(sk StoreKey) (address StoreAddress, exists bool, err
 	return
 }
 
-func (tsc *tsClient) SetKeyValue(sk StoreKey, value any) (address StoreAddress, firstValue bool, err error) {
+func (tsc *tsClient) SetKeyValue(sk StoreKey, value []byte) (address StoreAddress, firstValue bool, err error) {
 	response, err := tsc.apiCall("setv", string(sk.Path), valueEscape(value))
 	if err != nil {
 		return
@@ -179,20 +210,24 @@ func (tsc *tsClient) SetKeyValue(sk StoreKey, value any) (address StoreAddress, 
 	return
 }
 
-func (tsc *tsClient) SetKeyValueEx(sk StoreKey, value any, flags SetExFlags, expire *time.Time, relationships []StoreAddress) (address StoreAddress, exists bool, originalValue any, err error) {
+func (tsc *tsClient) SetKeyValueEx(sk StoreKey, value []byte, flags SetExFlags, expire *time.Time, relationships []StoreAddress) (address StoreAddress, exists bool, originalValue []byte, err error) {
 	args := []string{"setex", string(sk.Path)}
-	if flags & SetExNoValueUpdate == 0 {
-		args = append(args, valueEscape(value))
+	if (flags & SetExNoValueUpdate) == 0 {
+		if value == nil {
+			args = append(args, "--nil")
+		} else {
+			args = append(args, "--value", valueEscape(value))
+		}
 	}
 
-	if flags & SetExMustExist != 0 {
+	if (flags & SetExMustExist) != 0 {
 		args = append(args, "--mx")
-	} else if flags & SetExMustNotExist != 0 {
+	} else if (flags & SetExMustNotExist) != 0 {
 		args = append(args, "--nx")
 	}
 
 	if expire != nil {
-		args = append(args, fmt.Sprintf("%d", expire.UnixNano()))
+		args = append(args, "--ns", fmt.Sprintf("%d", expire.UnixNano()))
 	}
 
 	if relationships != nil {
@@ -203,7 +238,7 @@ func (tsc *tsClient) SetKeyValueEx(sk StoreKey, value any, flags SetExFlags, exp
 			}
 			sb.WriteString(fmt.Sprintf("%d", addr))
 		}
-		args = append(args, sb.String())
+		args = append(args, "--relationships", sb.String())
 	}
 
 	response, err := tsc.apiCall(args...)
@@ -228,8 +263,8 @@ func (tsc *tsClient) IsKeyIndexed(sk StoreKey) (address StoreAddress, exists boo
 		return
 	}
 
-	address = responseAddress(response["address"])
-	exists = responseBool(response["exists"])
+	addrStr, exists := response["address"]
+	address = responseAddress(addrStr)
 	return
 }
 
@@ -239,10 +274,9 @@ func (tsc *tsClient) LocateKey(sk StoreKey) (address StoreAddress, exists bool, 
 		return
 	}
 
-	addrStr, hasAddr := response["address"].(string)
-	if hasAddr {
+	addrStr, exists := response["address"].(float64)
+	if exists {
 		address = responseAddress(addrStr)
-		exists = responseBool(hasAddr)
 	}
 
 	return
@@ -254,7 +288,10 @@ func (tsc *tsClient) GetKeyTtl(sk StoreKey) (ttl *time.Time, err error) {
 		return
 	}
 
-	ttl = responseEpochNs(response["ttl"])
+	ttlStr, exists := response["ttl"].(string)
+	if exists {
+		ttl = responseEpochNs(ttlStr)
+	}
 	return
 }
 
@@ -268,7 +305,7 @@ func (tsc *tsClient) SetKeyTtl(sk StoreKey, expiration *time.Time) (exists bool,
 	return
 }
 
-func (tsc *tsClient) GetKeyValue(sk StoreKey) (value any, keyExists, valueExists bool, err error) {
+func (tsc *tsClient) GetKeyValue(sk StoreKey) (value []byte, keyExists, valueExists bool, err error) {
 	response, err := tsc.apiCall("getv", string(sk.Path))
 	if err != nil {
 		return
@@ -291,7 +328,10 @@ func (tsc *tsClient) GetKeyValueTtl(sk StoreKey) (ttl *time.Time, err error) {
 		return
 	}
 
-	ttl = responseEpochNs(response["ttl"])
+	ttlStr, exists := response["ttl"].(string)
+	if exists {
+		ttl = responseEpochNs(ttlStr)
+	}
 	return
 }
 
@@ -305,7 +345,7 @@ func (tsc *tsClient) SetKeyValueTtl(sk StoreKey, expiration *time.Time) (exists 
 	return
 }
 
-func (tsc *tsClient) GetKeyValueAtTime(sk StoreKey, when *time.Time) (value any, exists bool, err error) {
+func (tsc *tsClient) GetKeyValueAtTime(sk StoreKey, when *time.Time) (value []byte, exists bool, err error) {
 	response, err := tsc.apiCall("vat", string(sk.Path), requestEpochNs(when))
 	if err != nil {
 		return
@@ -319,7 +359,7 @@ func (tsc *tsClient) GetKeyValueAtTime(sk StoreKey, when *time.Time) (value any,
 	return
 }
 
-func (tsc *tsClient) DeleteKeyWithValue(sk StoreKey, clean bool) (removed bool, originalValue any, err error) {
+func (tsc *tsClient) DeleteKeyWithValue(sk StoreKey, clean bool) (removed bool, originalValue []byte, err error) {
 	args := []string{"delv", string(sk.Path)}
 	if clean {
 		args = append(args, "--clean")
@@ -337,7 +377,7 @@ func (tsc *tsClient) DeleteKeyWithValue(sk StoreKey, clean bool) (removed bool, 
 	return
 }
 
-func (tsc *tsClient) DeleteKey(sk StoreKey) (keyRemoved, valueRemoved bool, originalValue any, err error) {
+func (tsc *tsClient) DeleteKey(sk StoreKey) (keyRemoved, valueRemoved bool, originalValue []byte, err error) {
 	response, err := tsc.apiCall("delk", string(sk.Path))
 	if err != nil {
 		return
@@ -385,7 +425,7 @@ func (tsc *tsClient) GetMetadataAttribute(sk StoreKey, attribute string) (attrib
 		return
 	}
 
-	value, attributeExists = response["original_value"].(string)
+	value, attributeExists = response["value"].(string)
 	return
 }
 
@@ -395,7 +435,7 @@ func (tsc *tsClient) GetMetadataAttributes(sk StoreKey) (attributes []string, er
 		return
 	}
 
-	attributesAny, _ := response["original_value"].([]any)
+	attributesAny, _ := response["attributes"].([]any)
 	if attributesAny != nil {
 		attributes = make([]string, 0, len(attributesAny))
 		for _,attribute := range attributesAny {
@@ -418,7 +458,7 @@ func (tsc *tsClient) KeyFromAddress(addr StoreAddress) (sk StoreKey, exists bool
 	return
 }
 
-func (tsc *tsClient) KeyValueFromAddress(addr StoreAddress) (keyExists, valueExists bool, sk StoreKey, value any, err error) {
+func (tsc *tsClient) KeyValueFromAddress(addr StoreAddress) (keyExists, valueExists bool, sk StoreKey, value []byte, err error) {
 	response, err := tsc.apiCall("addrv", requestAddress(addr))
 	if err != nil {
 		return
@@ -459,7 +499,7 @@ func (tsc *tsClient) GetRelationshipValue(sk StoreKey, relationshipIndex int) (h
 	return
 }
 
-func (tsc *tsClient) GetLevelKeys(sk StoreKey, pattern string, startAt, limit int) (keys []LevelKey, count int, err error) {
+func (tsc *tsClient) GetLevelKeys(sk StoreKey, pattern string, startAt, limit int) (keys []LevelKey, err error) {
 	response, err := tsc.apiCall("nodes", string(sk.Path), pattern, "--start", fmt.Sprintf("%d", startAt), "--limit", fmt.Sprintf("%d", limit), "--detailed")
 	if err != nil {
 		return
@@ -474,7 +514,7 @@ func (tsc *tsClient) GetLevelKeys(sk StoreKey, pattern string, startAt, limit in
 		hasValue := responseBool(key["has_value"])
 		hasChildren := responseBool(key["has_children"])
 		lk := LevelKey{
-			Segment: TokenSegment(segment),
+			Segment: TokenSegment(UnescapeTokenString(segment)),
 			HasValue: hasValue,
 			HasChildren: hasChildren,
 		}
@@ -535,7 +575,7 @@ func (tsc *tsClient) GetMatchingKeys(skPattern StoreKey, startAt, limit int) (ke
 }
 
 func (tsc *tsClient) GetMatchingKeyValues(skPattern StoreKey, startAt, limit int) (values []*KeyValueMatch, err error) {
-	response, err := tsc.apiCall("lsk", string(skPattern.Path), "--start", fmt.Sprintf("%d", startAt), "--limit", fmt.Sprintf("%d", limit), "--detailed")
+	response, err := tsc.apiCall("lsv", string(skPattern.Path), "--start", fmt.Sprintf("%d", startAt), "--limit", fmt.Sprintf("%d", limit), "--detailed")
 	if err != nil {
 		return
 	}

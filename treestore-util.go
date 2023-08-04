@@ -1,6 +1,8 @@
 package treestore_client
 
 import (
+	"bytes"
+	"encoding/gob"
 	"encoding/hex"
 	"fmt"
 	"strconv"
@@ -25,6 +27,12 @@ func bytesToEscapedValue(v []byte) string {
 func valueEscape(v any) string {
 	switch t := v.(type) {
 	case string:
+		return bytesToEscapedValue([]byte(t))
+
+	case TokenPath:
+		return bytesToEscapedValue([]byte(t))
+
+	case treestore.TokenPath:
 		return bytesToEscapedValue([]byte(t))
 
 	case []byte:
@@ -55,6 +63,35 @@ func valueUnescape(v string) []byte {
 	}
 
 	return unescaped
+}
+
+// Simple wrapper of gob to binary-encode before storing as a treestore value.
+// panics on an error
+func ValueEncode[T any](v T) []byte {
+	b := bytes.Buffer{}
+	e := gob.NewEncoder(&b)
+
+	err := e.Encode(&v)
+	if err != nil {
+		panic(err)
+	}
+	return b.Bytes()
+}
+
+// Simple wrapper of gob to binary-decode after retrieving a treestore value.
+// panics on an error
+func ValueDecode[T any](v []byte) (result T) {
+	if v != nil {
+		b := bytes.Buffer{}
+		b.Write(v)
+		d := gob.NewDecoder(&b)
+
+		err := d.Decode(&result)
+		if err != nil {
+			panic(err)
+		}
+	}
+	return
 }
 
 func requestEpochNs(v *time.Time) string {
