@@ -7,35 +7,35 @@ import (
 )
 
 type (
-	TokenSegment treestore.TokenSegment
-	TokenPath treestore.TokenPath
-	TokenSet treestore.TokenSet
-	StoreKey treestore.StoreKey
-	StoreAddress treestore.StoreAddress
-	SetExFlags treestore.SetExFlags
+	TokenSegment      treestore.TokenSegment
+	TokenPath         treestore.TokenPath
+	TokenSet          treestore.TokenSet
+	StoreKey          treestore.StoreKey
+	StoreAddress      treestore.StoreAddress
+	SetExFlags        treestore.SetExFlags
 	RelationshipValue struct {
 		Sk           StoreKey
 		CurrentValue []byte
 	}
 	LevelKey struct {
-		Segment     TokenSegment 
-		HasValue    bool         
-		HasChildren bool         
+		Segment     TokenSegment
+		HasValue    bool
+		HasChildren bool
 	}
 	KeyMatch struct {
-		Key TokenPath
-		Metadata      map[string]string 
-		HasValue      bool              
-		HasChildren   bool              
-		CurrentValue  []byte               
-		Relationships []StoreAddress    
+		Key           TokenPath
+		Metadata      map[string]string
+		HasValue      bool
+		HasChildren   bool
+		CurrentValue  []byte
+		Relationships []StoreAddress
 	}
 	KeyValueMatch struct {
-		Key TokenPath
-		Metadata      map[string]string 
-		HasChildren   bool              
-		CurrentValue  []byte               
-		Relationships []StoreAddress    
+		Key           TokenPath
+		Metadata      map[string]string
+		HasChildren   bool
+		CurrentValue  []byte
+		Relationships []StoreAddress
 	}
 
 	TSClient interface {
@@ -65,6 +65,10 @@ type (
 		GetLevelKeys(sk StoreKey, pattern string, startAt, limit int) (keys []LevelKey, err error)
 		GetMatchingKeys(skPattern StoreKey, startAt, limit int) (keys []*KeyMatch, err error)
 		GetMatchingKeyValues(skPattern StoreKey, startAt, limit int) (values []*KeyValueMatch, err error)
+		Export(sk StoreKey) (jsonData any, err error)
+		ExportBase64(sk StoreKey) (b64 string, err error)
+		Import(sk StoreKey, jsonData any) (err error)
+		ImportBase64(sk StoreKey, b64 string) (err error)
 	}
 )
 

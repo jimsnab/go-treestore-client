@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 
@@ -215,7 +216,7 @@ func TestSetGetKeyTtl(t *testing.T) {
 	}
 	if ttl.UnixNano() != now.UnixNano() {
 		t.Error("verify long ttl")
-	} 
+	}
 
 	verifyAddr, located, err := tsc.LocateKey(sk)
 	if err != nil {
@@ -291,7 +292,7 @@ func TestSetGetKeyValueTtl(t *testing.T) {
 	if ttl.UnixNano() != now.UnixNano() {
 		t.Error("verify long ttl")
 	}
-	
+
 	ttl, err = tsc.GetKeyValueTtl(sk2)
 	if err != nil {
 		t.Fatal(err)
@@ -736,8 +737,8 @@ func TestMatchingValues(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(values) != 2 || values[0].Key != `/dog\ss` || values[0].HasChildren || !bytes.Equal(values[0].CurrentValue, []byte("2")) || 
-	    values[1].Key != `/mouse` || values[1].HasChildren || !bytes.Equal(values[1].CurrentValue, []byte("3")) {
+	if len(values) != 2 || values[0].Key != `/dog\ss` || values[0].HasChildren || !bytes.Equal(values[0].CurrentValue, []byte("2")) ||
+		values[1].Key != `/mouse` || values[1].HasChildren || !bytes.Equal(values[1].CurrentValue, []byte("3")) {
 		t.Error("match pattern")
 	}
 
@@ -755,5 +756,78 @@ func TestMatchingValues(t *testing.T) {
 	}
 	if len(values) != 1 || values[0].Key != `/mouse` || values[0].HasChildren || !bytes.Equal(values[0].CurrentValue, []byte("3")) {
 		t.Error("start")
+	}
+}
+
+func TestImportExportPlain(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	jsonData := map[string]any{
+		"children": map[string]any{
+			"key": map[string]any{
+				"history": []any{
+					map[string]any{
+						"timestamp": int64(0),
+						"type":      "int",
+						"value":     "123",
+					},
+				},
+			},
+		},
+	}
+
+	err := tsc.Import(MakeStoreKey(), jsonData)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	jsonData2, err := tsc.Export(MakeStoreKey())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	exported := jsonData2.(map[string]any)
+
+	children, _ := exported["children"].(map[string]any)
+	if children == nil {
+		t.Fatal("children")
+	}
+	keys, _ := children["key"].(map[string]any)
+	if keys == nil {
+		t.Fatal("keys")
+	}
+	history, _ := keys["history"].([]any)
+	if len(history) != 1 {
+		t.Fatal("history")
+	}
+	value, _ := history[0].(map[string]any)
+	if value == nil {
+		t.Fatal("value")
+	}
+	vt, _ := value["type"].(string)
+	if vt != "int" {
+		t.Fatal("value type")
+	}
+	val, _ := strconv.ParseInt(value["value"].(string), 10, 64)
+	if val != 123 {
+		t.Fatal("int val")
+	}
+}
+
+func TestImportExportBase64(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	err := tsc.ImportBase64(MakeStoreKey(), "eyJjaGlsZHJlbiI6eyJ0ZXN0Ijp7ImNoaWxkcmVuIjp7ImNhdCI6eyJjaGlsZHJlbiI6eyJtZW93Ijp7fX19LCJkb2ciOnsiY2hpbGRyZW4iOnsiYmFyayI6e319fX19fX0=")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	b64, err := tsc.ExportBase64(MakeStoreKey())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if b64 != "eyJjaGlsZHJlbiI6eyJ0ZXN0Ijp7ImNoaWxkcmVuIjp7ImNhdCI6eyJjaGlsZHJlbiI6eyJtZW93Ijp7fX19LCJkb2ciOnsiY2hpbGRyZW4iOnsiYmFyayI6e319fX19fX0=" {
+		t.Error("round trip verify")
 	}
 }

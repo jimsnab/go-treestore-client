@@ -38,7 +38,7 @@ func valueEscape(v any) string {
 	case []byte:
 		return bytesToEscapedValue(t)
 
- 	default:
+	default:
 		return ""
 	}
 }
@@ -118,8 +118,8 @@ func responseEpochNs(v any) *time.Time {
 	if n == 0 {
 		return nil
 	}
-	
-	t := time.Unix(n / (1000 * 1000 * 1000), n % (1000 * 1000 * 1000))
+
+	t := time.Unix(n/(1000*1000*1000), n%(1000*1000*1000))
 	return &t
 }
 
@@ -161,7 +161,7 @@ func MakeStoreKeyFromPath(tokenPath TokenPath) StoreKey {
 
 func MakeStoreKeyFromTokenSegments(segments ...TokenSegment) StoreKey {
 	arg := make([]treestore.TokenSegment, 0, len(segments))
-	for _,seg := range segments {
+	for _, seg := range segments {
 		arg = append(arg, treestore.TokenSegment(seg))
 	}
 	return StoreKey(treestore.MakeStoreKeyFromTokenSegments(arg...))
@@ -170,4 +170,3 @@ func MakeStoreKeyFromTokenSegments(segments ...TokenSegment) StoreKey {
 func SplitStoreKey(sk StoreKey) []string {
 	return treestore.SplitStoreKey(treestore.StoreKey(sk))
 }
-

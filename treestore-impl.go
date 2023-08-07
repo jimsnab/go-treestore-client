@@ -19,17 +19,17 @@ import (
 type (
 	tsClient struct {
 		sync.Mutex
-		l lane.Lane
+		l           lane.Lane
 		cxn         net.Conn
 		hostAndPort string
-		inbound []byte
-		invoked atomic.Int32
+		inbound     []byte
+		invoked     atomic.Int32
 	}
 )
 
 func NewTSClient(l lane.Lane) TSClient {
 	tsc := &tsClient{
-		l: l,
+		l:           l,
 		hostAndPort: "localhost:6770",
 	}
 
@@ -56,7 +56,7 @@ func (tsc *tsClient) close() (err error) {
 	return
 }
 
-func (tsc *tsClient) SetServer(host string, port int) {	
+func (tsc *tsClient) SetServer(host string, port int) {
 	tsc.close()
 
 	tsc.Lock()
@@ -66,7 +66,7 @@ func (tsc *tsClient) SetServer(host string, port int) {
 
 func (tsc *tsClient) Close() (err error) {
 	err = tsc.close()
-	return 
+	return
 }
 
 func (tsc *tsClient) apiCall(args ...string) (response map[string]any, err error) {
@@ -88,7 +88,7 @@ func (tsc *tsClient) apiCall(args ...string) (response map[string]any, err error
 				tsc.l.Errorf("can't connect to %s: %s", tsc.hostAndPort, err.Error())
 				return
 			}
-	
+
 			tsc.cxn = cxn
 		}
 		return
@@ -163,6 +163,12 @@ func (tsc *tsClient) apiCall(args ...string) (response map[string]any, err error
 		}
 		if response != nil {
 			tsc.inbound = tsc.inbound[length:]
+
+			errText, isError := response["error"].(string)
+			if isError {
+				err = errors.New(errText)
+				return
+			}
 			return
 		}
 	}
@@ -175,7 +181,7 @@ func (tsc *tsClient) parseResponse() (length int, response map[string]any, err e
 
 	packetSize := binary.BigEndian.Uint32(tsc.inbound)
 	if len(tsc.inbound)-4 < int(packetSize) {
-		tsc.l.Tracef("insufficient input, expecting %d bytes, have %d bytes", packetSize, len(tsc.inbound) - 4)
+		tsc.l.Tracef("insufficient input, expecting %d bytes, have %d bytes", packetSize, len(tsc.inbound)-4)
 		return
 	}
 
@@ -232,7 +238,7 @@ func (tsc *tsClient) SetKeyValueEx(sk StoreKey, value []byte, flags SetExFlags, 
 
 	if relationships != nil {
 		var sb strings.Builder
-		for idx,addr := range relationships {
+		for idx, addr := range relationships {
 			if idx > 0 {
 				sb.WriteString(",")
 			}
@@ -384,7 +390,7 @@ func (tsc *tsClient) DeleteKey(sk StoreKey) (keyRemoved, valueRemoved bool, orig
 	}
 
 	keyRemoved = responseBool(response["key_removed"])
-	
+
 	var orgValStr string
 	orgValStr, valueRemoved = response["original_value"].(string)
 	if valueRemoved {
@@ -438,7 +444,7 @@ func (tsc *tsClient) GetMetadataAttributes(sk StoreKey) (attributes []string, er
 	attributesAny, _ := response["attributes"].([]any)
 	if attributesAny != nil {
 		attributes = make([]string, 0, len(attributesAny))
-		for _,attribute := range attributesAny {
+		for _, attribute := range attributesAny {
 			attributes = append(attributes, attribute.(string))
 		}
 	}
@@ -508,14 +514,14 @@ func (tsc *tsClient) GetLevelKeys(sk StoreKey, pattern string, startAt, limit in
 	rawKeys, _ := response["keys"].([]any)
 	keys = make([]LevelKey, 0, len(rawKeys))
 
-	for _,rawKey := range rawKeys {
+	for _, rawKey := range rawKeys {
 		key := rawKey.(map[string]any)
 		segment := key["segment"].(string)
 		hasValue := responseBool(key["has_value"])
 		hasChildren := responseBool(key["has_children"])
 		lk := LevelKey{
-			Segment: TokenSegment(UnescapeTokenString(segment)),
-			HasValue: hasValue,
+			Segment:     TokenSegment(UnescapeTokenString(segment)),
+			HasValue:    hasValue,
 			HasChildren: hasChildren,
 		}
 
@@ -533,7 +539,7 @@ func (tsc *tsClient) GetMatchingKeys(skPattern StoreKey, startAt, limit int) (ke
 	rawKeys, _ := response["keys"].([]any)
 	keys = make([]*KeyMatch, 0, len(rawKeys))
 
-	for _,rawKey := range rawKeys {
+	for _, rawKey := range rawKeys {
 		key := rawKey.(map[string]any)
 		tokenPath := key["key"].(string)
 		hasValue := responseBool(key["has_value"])
@@ -544,7 +550,7 @@ func (tsc *tsClient) GetMatchingKeys(skPattern StoreKey, startAt, limit int) (ke
 		var relationships []StoreAddress
 		if relExists {
 			relationships = make([]StoreAddress, len(rawRelationships))
-			for _,rel := range rawRelationships {
+			for _, rel := range rawRelationships {
 				relationships = append(relationships, rel.(StoreAddress))
 			}
 		}
@@ -553,16 +559,16 @@ func (tsc *tsClient) GetMatchingKeys(skPattern StoreKey, startAt, limit int) (ke
 		rawMetadata, mdExists := key["metadata"].(map[string]any)
 		if mdExists {
 			metadata = make(map[string]string, len(rawMetadata))
-			for k,v := range rawMetadata {
+			for k, v := range rawMetadata {
 				metadata[k] = v.(string)
 			}
 		}
 
 		km := &KeyMatch{
-			Key: TokenPath(tokenPath),
-			Metadata: metadata,
-			HasValue: hasValue,
-			HasChildren: hasChildren,
+			Key:           TokenPath(tokenPath),
+			Metadata:      metadata,
+			HasValue:      hasValue,
+			HasChildren:   hasChildren,
 			Relationships: relationships,
 		}
 		if vsExists {
@@ -583,7 +589,7 @@ func (tsc *tsClient) GetMatchingKeyValues(skPattern StoreKey, startAt, limit int
 	rawValues, _ := response["values"].([]any)
 	values = make([]*KeyValueMatch, 0, len(rawValues))
 
-	for _,rawKey := range rawValues {
+	for _, rawKey := range rawValues {
 		value := rawKey.(map[string]any)
 		tokenPath := value["key"].(string)
 		hasChildren := responseBool(value["has_children"])
@@ -593,7 +599,7 @@ func (tsc *tsClient) GetMatchingKeyValues(skPattern StoreKey, startAt, limit int
 		var relationships []StoreAddress
 		if relExists {
 			relationships = make([]StoreAddress, len(rawRelationships))
-			for _,rel := range rawRelationships {
+			for _, rel := range rawRelationships {
 				relationships = append(relationships, rel.(StoreAddress))
 			}
 		}
@@ -602,15 +608,15 @@ func (tsc *tsClient) GetMatchingKeyValues(skPattern StoreKey, startAt, limit int
 		rawMetadata, mdExists := value["metadata"].(map[string]any)
 		if mdExists {
 			metadata = make(map[string]string, len(rawMetadata))
-			for k,v := range rawMetadata {
+			for k, v := range rawMetadata {
 				metadata[k] = v.(string)
 			}
 		}
 
 		kvm := &KeyValueMatch{
-			Key: TokenPath(tokenPath),
-			Metadata: metadata,
-			HasChildren: hasChildren,
+			Key:           TokenPath(tokenPath),
+			Metadata:      metadata,
+			HasChildren:   hasChildren,
 			Relationships: relationships,
 		}
 		if vsExists {
@@ -618,6 +624,47 @@ func (tsc *tsClient) GetMatchingKeyValues(skPattern StoreKey, startAt, limit int
 		}
 
 		values = append(values, kvm)
+	}
+	return
+}
+
+func (tsc *tsClient) Export(sk StoreKey) (jsonData any, err error) {
+	response, err := tsc.apiCall("export", string(sk.Path))
+	if err != nil {
+		return
+	}
+
+	jsonData = response["data"]
+	return
+}
+
+func (tsc *tsClient) ExportBase64(sk StoreKey) (b64 string, err error) {
+	response, err := tsc.apiCall("export", string(sk.Path), "--base64")
+	if err != nil {
+		return
+	}
+
+	b64, _ = response["base64"].(string)
+	return
+}
+
+func (tsc *tsClient) Import(sk StoreKey, jsonData any) (err error) {
+	marshalled, err := json.Marshal(jsonData)
+	if err != nil {
+		return
+	}
+
+	_, err = tsc.apiCall("import", string(sk.Path), string(marshalled))
+	if err != nil {
+		return
+	}
+	return
+}
+
+func (tsc *tsClient) ImportBase64(sk StoreKey, b64 string) (err error) {
+	_, err = tsc.apiCall("import", string(sk.Path), b64, "--base64")
+	if err != nil {
+		return
 	}
 	return
 }
