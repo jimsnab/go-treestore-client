@@ -3,6 +3,8 @@ package treestore_client
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"testing"
@@ -829,5 +831,289 @@ func TestImportExportBase64(t *testing.T) {
 
 	if b64 != "eyJjaGlsZHJlbiI6eyJ0ZXN0Ijp7ImNoaWxkcmVuIjp7ImNhdCI6eyJjaGlsZHJlbiI6eyJtZW93Ijp7fX19LCJkb2ciOnsiY2hpbGRyZW4iOnsiYmFyayI6e319fX19fX0=" {
 		t.Error("round trip verify")
+	}
+}
+
+func doesJsonMatch(t *testing.T, context string, data1, data2 any) {
+	v1, err := json.Marshal(data1)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	v2, err := json.Marshal(data2)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if !bytes.Equal(v1, v2) {
+		t.Errorf("%s json mismatch", context)
+	}
+}
+
+func TestJsonSet(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	sk := MakeStoreKey("test")
+
+	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
+
+	var jsonData any
+	err := json.Unmarshal(jsonText, &jsonData)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	replaced, err := tsc.SetKeyJson(sk, jsonData)
+	if replaced || err != nil {
+		t.Error("set json")
+	}
+
+	data, err := tsc.GetKeyAsJson(sk)
+	if data == nil || err != nil {
+		t.Error("get json")
+	}
+
+	doesJsonMatch(t, "set", jsonData, data)
+}
+
+func TestJsonSetBase64(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	sk := MakeStoreKey("test")
+
+	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
+	jsonDataB64 := base64.StdEncoding.EncodeToString(jsonText)
+
+	replaced, err := tsc.SetKeyJsonBase64(sk, jsonDataB64)
+	if replaced || err != nil {
+		t.Error("set json")
+	}
+
+	data, err := tsc.GetKeyAsJsonBase64(sk)
+	if data != "eyJhbmltYWxzIjp7ImNhdCI6eyJzb3VuZCI6Im1lb3cifSwiZG9nIjp7ImJyZWVkcyI6MzYwLCJzb3VuZCI6ImJhcmsifX19" || err != nil {
+		t.Error("get json")
+	}
+}
+
+func TestJsonCreate(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	sk := MakeStoreKey("test")
+
+	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
+
+	var jsonData any
+	err := json.Unmarshal(jsonText, &jsonData)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	created, err := tsc.CreateKeyJson(sk, jsonData)
+	if !created || err != nil {
+		t.Error("create json")
+	}
+
+	data, err := tsc.GetKeyAsJson(sk)
+	if data == nil || err != nil {
+		t.Error("get json")
+	}
+
+	doesJsonMatch(t, "create", jsonData, data)
+
+	created, err = tsc.CreateKeyJson(sk, jsonData)
+	if created || err != nil {
+		t.Error("create json 2")
+	}
+}
+
+func TestJsonCreateB64(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	sk := MakeStoreKey("test")
+
+	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
+	jsonDataB64 := base64.StdEncoding.EncodeToString(jsonText)
+
+	created, err := tsc.CreateKeyJsonBase64(sk, jsonDataB64)
+	if !created || err != nil {
+		t.Error("create json")
+	}
+
+	data, err := tsc.GetKeyAsJsonBase64(sk)
+	if data != "eyJhbmltYWxzIjp7ImNhdCI6eyJzb3VuZCI6Im1lb3cifSwiZG9nIjp7ImJyZWVkcyI6MzYwLCJzb3VuZCI6ImJhcmsifX19" || err != nil {
+		t.Error("get json")
+	}
+
+	created, err = tsc.CreateKeyJsonBase64(sk, jsonDataB64)
+	if created || err != nil {
+		t.Error("create json 2")
+	}
+}
+
+func TestJsonReplace(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	sk := MakeStoreKey("test")
+
+	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
+
+	var jsonData any
+	err := json.Unmarshal(jsonText, &jsonData)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	replaced, err := tsc.ReplaceKeyJson(sk, jsonData)
+	if replaced || err != nil {
+		t.Error("replace json 1")
+	}
+
+	created, err := tsc.CreateKeyJson(sk, jsonData)
+	if !created || err != nil {
+		t.Error("create json")
+	}
+
+	data, err := tsc.GetKeyAsJson(sk)
+	if data == nil || err != nil {
+		t.Error("get json")
+	}
+
+	doesJsonMatch(t, "replace 1", jsonData, data)
+
+	replaced, err = tsc.ReplaceKeyJson(sk, jsonData)
+	if !replaced || err != nil {
+		t.Error("replace json 2")
+	}
+
+	jsonText = []byte(`{"animals": {"fox": {"sound": "howl"}}}`)
+
+	err = json.Unmarshal(jsonText, &jsonData)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	replaced, err = tsc.ReplaceKeyJson(sk, jsonData)
+	if !replaced || err != nil {
+		t.Error("replace json 2")
+	}
+
+	data, err = tsc.GetKeyAsJson(sk)
+	if data == nil || err != nil {
+		t.Error("get json 2")
+	}
+
+	doesJsonMatch(t, "replace 2", jsonData, data)
+}
+
+func TestJsonReplaceBase64(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	sk := MakeStoreKey("test")
+
+	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
+	jsonDataB64 := base64.StdEncoding.EncodeToString(jsonText)
+
+	replaced, err := tsc.ReplaceKeyJsonBase64(sk, jsonDataB64)
+	if replaced || err != nil {
+		t.Error("replace json 1")
+	}
+
+	created, err := tsc.CreateKeyJsonBase64(sk, jsonDataB64)
+	if !created || err != nil {
+		t.Error("create json")
+	}
+
+	data, err := tsc.GetKeyAsJsonBase64(sk)
+	if data != "eyJhbmltYWxzIjp7ImNhdCI6eyJzb3VuZCI6Im1lb3cifSwiZG9nIjp7ImJyZWVkcyI6MzYwLCJzb3VuZCI6ImJhcmsifX19" || err != nil {
+		t.Error("get json")
+	}
+
+	replaced, err = tsc.ReplaceKeyJson(sk, jsonDataB64)
+	if !replaced || err != nil {
+		t.Error("replace json 2")
+	}
+
+	jsonText = []byte(`{"animals": {"fox": {"sound": "howl"}}}`)
+	jsonDataB64 = base64.StdEncoding.EncodeToString(jsonText)
+
+	replaced, err = tsc.ReplaceKeyJsonBase64(sk, jsonDataB64)
+	if !replaced || err != nil {
+		t.Error("replace json 2")
+	}
+
+	data, err = tsc.GetKeyAsJsonBase64(sk)
+	if data != "eyJhbmltYWxzIjp7ImZveCI6eyJzb3VuZCI6Imhvd2wifX19" || err != nil {
+		t.Error("get json 2")
+	}
+}
+
+func TestJsonMerge(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	sk := MakeStoreKey("test")
+
+	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
+
+	var jsonData any
+	err := json.Unmarshal(jsonText, &jsonData)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	err = tsc.MergeKeyJson(sk, jsonData)
+	if err != nil {
+		t.Error("merge 1")
+	}
+
+	jsonText = []byte(`{"animals": {"fox": {"sound": "howl"}}}`)
+
+	err = json.Unmarshal(jsonText, &jsonData)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	err = tsc.MergeKeyJson(sk, jsonData)
+	if err != nil {
+		t.Error("merge 2")
+	}
+
+	data, err := tsc.GetKeyAsJson(sk)
+	if data == nil || err != nil {
+		t.Error("get json 2")
+	}
+
+	jsonText = []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}, "fox": {"sound": "howl"}}}`)
+
+	err = json.Unmarshal(jsonText, &jsonData)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	doesJsonMatch(t, "merge", jsonData, data)
+}
+
+func TestJsonMergeBase64(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	sk := MakeStoreKey("test")
+
+	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
+	jsonDataB64 := base64.StdEncoding.EncodeToString(jsonText)
+
+	err := tsc.MergeKeyJsonBase64(sk, jsonDataB64)
+	if err != nil {
+		t.Error("merge 1")
+	}
+
+	jsonText = []byte(`{"animals": {"fox": {"sound": "howl"}}}`)
+	jsonDataB64 = base64.StdEncoding.EncodeToString(jsonText)
+
+	err = tsc.MergeKeyJsonBase64(sk, jsonDataB64)
+	if err != nil {
+		t.Error("merge 2")
+	}
+
+	data, err := tsc.GetKeyAsJsonBase64(sk)
+	if data != "eyJhbmltYWxzIjp7ImNhdCI6eyJzb3VuZCI6Im1lb3cifSwiZG9nIjp7ImJyZWVkcyI6MzYwLCJzb3VuZCI6ImJhcmsifSwiZm94Ijp7InNvdW5kIjoiaG93bCJ9fX0=" || err != nil {
+		t.Error("get json 2")
 	}
 }

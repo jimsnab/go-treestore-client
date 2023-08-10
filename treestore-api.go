@@ -69,6 +69,16 @@ type (
 		ExportBase64(sk StoreKey) (b64 string, err error)
 		Import(sk StoreKey, jsonData any) (err error)
 		ImportBase64(sk StoreKey, b64 string) (err error)
+		GetKeyAsJson(sk StoreKey) (jsonData any, err error)
+		GetKeyAsJsonBase64(sk StoreKey) (b64 string, err error)
+		SetKeyJson(sk StoreKey, jsonData any) (replaced bool, err error)
+		SetKeyJsonBase64(sk StoreKey, b64 string) (replaced bool, err error)
+		CreateKeyJson(sk StoreKey, jsonData any) (created bool, err error)
+		CreateKeyJsonBase64(sk StoreKey, b64 string) (created bool, err error)
+		ReplaceKeyJson(sk StoreKey, jsonData any) (replaced bool, err error)
+		ReplaceKeyJsonBase64(sk StoreKey, b64 string) (replaced bool, err error)
+		MergeKeyJson(sk StoreKey, jsonData any) (err error)
+		MergeKeyJsonBase64(sk StoreKey, b64 string) (err error)
 	}
 )
 

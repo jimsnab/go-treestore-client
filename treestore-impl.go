@@ -668,3 +668,121 @@ func (tsc *tsClient) ImportBase64(sk StoreKey, b64 string) (err error) {
 	}
 	return
 }
+
+func (tsc *tsClient) GetKeyAsJson(sk StoreKey) (jsonData any, err error) {
+	response, err := tsc.apiCall("getjson", string(sk.Path))
+	if err != nil {
+		return
+	}
+
+	jsonData = response["data"]
+	return
+}
+
+func (tsc *tsClient) GetKeyAsJsonBase64(sk StoreKey) (b64 string, err error) {
+	response, err := tsc.apiCall("getjson", string(sk.Path), "--base64")
+	if err != nil {
+		return
+	}
+
+	b64, _ = response["base64"].(string)
+	return
+}
+
+func (tsc *tsClient) SetKeyJson(sk StoreKey, jsonData any) (replaced bool, err error) {
+	marshalled, err := json.Marshal(jsonData)
+	if err != nil {
+		return
+	}
+
+	response, err := tsc.apiCall("setjson", string(sk.Path), string(marshalled))
+	if err != nil {
+		return
+	}
+
+	replaced, _ = response["replaced"].(bool)
+	return
+}
+
+func (tsc *tsClient) SetKeyJsonBase64(sk StoreKey, b64 string) (replaced bool, err error) {
+	response, err := tsc.apiCall("setjson", string(sk.Path), b64, "--base64")
+	if err != nil {
+		return
+	}
+
+	replaced, _ = response["replaced"].(bool)
+	return
+}
+
+func (tsc *tsClient) CreateKeyJson(sk StoreKey, jsonData any) (created bool, err error) {
+	marshalled, err := json.Marshal(jsonData)
+	if err != nil {
+		return
+	}
+
+	response, err := tsc.apiCall("createjson", string(sk.Path), string(marshalled))
+	if err != nil {
+		return
+	}
+
+	created, _ = response["created"].(bool)
+	return
+}
+
+func (tsc *tsClient) CreateKeyJsonBase64(sk StoreKey, b64 string) (created bool, err error) {
+	response, err := tsc.apiCall("createjson", string(sk.Path), b64, "--base64")
+	if err != nil {
+		return
+	}
+
+	created, _ = response["created"].(bool)
+	return
+}
+
+func (tsc *tsClient) ReplaceKeyJson(sk StoreKey, jsonData any) (replaced bool, err error) {
+	marshalled, err := json.Marshal(jsonData)
+	if err != nil {
+		return
+	}
+
+	response, err := tsc.apiCall("replacejson", string(sk.Path), string(marshalled))
+	if err != nil {
+		return
+	}
+
+	replaced, _ = response["replaced"].(bool)
+	return
+}
+
+func (tsc *tsClient) ReplaceKeyJsonBase64(sk StoreKey, b64 string) (replaced bool, err error) {
+	response, err := tsc.apiCall("replacejson", string(sk.Path), b64, "--base64")
+	if err != nil {
+		return
+	}
+
+	replaced, _ = response["replaced"].(bool)
+	return
+}
+
+func (tsc *tsClient) MergeKeyJson(sk StoreKey, jsonData any) (err error) {
+	marshalled, err := json.Marshal(jsonData)
+	if err != nil {
+		return
+	}
+
+	_, err = tsc.apiCall("mergejson", string(sk.Path), string(marshalled))
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func (tsc *tsClient) MergeKeyJsonBase64(sk StoreKey, b64 string) (err error) {
+	_, err = tsc.apiCall("mergejson", string(sk.Path), b64, "--base64")
+	if err != nil {
+		return
+	}
+
+	return
+}
