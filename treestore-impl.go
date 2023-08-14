@@ -434,6 +434,16 @@ func (tsc *tsClient) DeleteKey(sk StoreKey) (keyRemoved, valueRemoved bool, orig
 	return
 }
 
+func (tsc *tsClient) DeleteKeyTree(sk StoreKey) (removed bool, err error) {
+	response, err := tsc.apiCall("deltree", string(sk.Path))
+	if err != nil {
+		return
+	}
+
+	removed = responseBool(response["removed"])
+	return
+}
+
 func (tsc *tsClient) SetMetadataAttribute(sk StoreKey, attribute, value string) (keyExists bool, priorValue string, err error) {
 	response, err := tsc.apiCall("setmeta", string(sk.Path), attribute, value)
 	if err != nil {

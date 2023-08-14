@@ -130,6 +130,14 @@ type (
 		// The sentinal (root) key node cannot be deleted; only its value can be cleared.
 		DeleteKey(sk StoreKey) (keyRemoved, valueRemoved bool, originalValue any, err error)
 
+		// Deletes a key and all of its child data.
+//
+// All key nodes along the store key path will be locked during the operation, so
+// this operation blocks subsequent operations until it completes.
+//
+// The sentinal (root) key node cannot be deleted; only its value can be cleared.
+DeleteKeyTree(sk StoreKey) (removed bool, err error)
+
 		// Sets a metadata attribute on a key, returning the original value (if any)
 		SetMetadataAttribute(sk StoreKey, attribute, value string) (keyExists bool, priorValue string, err error)
 

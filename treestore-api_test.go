@@ -408,6 +408,45 @@ func TestSetDelK(t *testing.T) {
 	}
 }
 
+func TestSetDelTree(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	sk := MakeStoreKey("client", "test", "key")
+
+	addr, exists, err := tsc.SetKey(sk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if addr != 4 || exists {
+		t.Error("initial key")
+	}
+
+	removed, err := tsc.DeleteKeyTree(sk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !removed {
+		t.Error("remove it")
+	}
+
+	removed, err = tsc.DeleteKeyTree(sk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if removed {
+		t.Error("remove it again")
+	}
+
+	verifyAddr, located, err := tsc.LocateKey(sk)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if verifyAddr != 0 || located {
+		t.Error("verify")
+	}
+}
+
 func TestSetDelKV(t *testing.T) {
 	_, tsc := testSetup(t)
 
