@@ -196,6 +196,8 @@ type (
 		// Retrieves the child key tree and leaf values in the form of json. If
 		// metdata "array" is "true" then the child key nodes are treated as
 		// array indicies. (They must be big endian uint32.)
+		//
+		// If the key does not exist, jsonData will be null.
 		GetKeyAsJson(sk StoreKey) (jsonData any, err error)
 
 		// Retrieves the child key tree and leaf values in the form of json. If
@@ -204,11 +206,15 @@ type (
 		//
 		// This entry point is useful for code that will unmarshal the json into
 		// a specific struct.
+		//
+		// If the key does not exist, jsonData will be the string "null".
 		GetKeyAsJsonBytes(sk StoreKey) (jsonData []byte, err error)
 
 		// Retrieves the child key tree and leaf values in the form of json. If
 		// metdata "array" is "true" then the child key nodes are treated as
 		// array indicies. (They must be big endian uint32.)
+		//
+		// If the key does not exist, b64 will be base64 encoding of the string "null".
 		GetKeyAsJsonBase64(sk StoreKey) (b64 string, err error)
 
 		// Takes the generalized json data and stores it at the specified key path.

@@ -908,6 +908,44 @@ func TestJsonSetBytes(t *testing.T) {
 	doesJsonMatch(t, "set", jsonData, m)
 }
 
+func TestJsonGetMissing(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	sk := MakeStoreKey("test")
+
+	data, err := tsc.GetKeyAsJson(sk)
+	if err != nil {
+		t.Error("get json")
+	}
+
+	if data != nil {
+		t.Error("data should be nil")
+	}
+}
+
+func TestJsonGetBytesMissing(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	sk := MakeStoreKey("test")
+
+	data, err := tsc.GetKeyAsJsonBytes(sk)
+	if err != nil {
+		t.Error("get json")
+	}
+
+	if data == nil {
+		t.Error("data should not be nil")
+	}
+
+	var jsonData any
+	err = json.Unmarshal(data, &jsonData)
+	if err != nil {
+		t.Fatal("test data unmarshal")
+	}
+
+	doesJsonMatch(t, "get bytes", jsonData, nil)
+}
+
 func TestJsonSetBase64(t *testing.T) {
 	_, tsc := testSetup(t)
 
