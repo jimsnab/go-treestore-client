@@ -59,7 +59,7 @@ func TestSetGetV(t *testing.T) {
 
 	tick := fmt.Sprintf("%d", time.Now().UnixNano())
 
-	_, _, err := tsc.SetKeyValue(MakeStoreKey("client", "test", "key"), []byte(tick))
+	_, _, err := tsc.SetKeyValue(MakeStoreKey("client", "test", "key"), tick)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,7 +69,7 @@ func TestSetGetV(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if string(value) != tick {
+	if value.(string) != tick {
 		t.Error("not check")
 	}
 	if !ke || !vs {
@@ -90,7 +90,7 @@ func TestSetEx(t *testing.T) {
 		t.Error("first setex")
 	}
 
-	v1 := ValueEncode(100)
+	v1 := 100
 
 	addr, exists, orgVal, err = tsc.SetKeyValueEx(sk, v1, 0, nil, nil)
 	if err != nil {
@@ -108,18 +108,18 @@ func TestSetEx(t *testing.T) {
 		t.Error("verify key is indexed")
 	}
 
-	v2 := ValueEncode(200)
+	v2 := 200
 
 	addr, exists, orgVal, err = tsc.SetKeyValueEx(sk, v2, 0, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if !bytes.Equal(orgVal, v1) {
+	if orgVal != v1 {
 		t.Error("value bytes")
 	}
 
-	if addr != 4 || !exists || ValueDecode[int](orgVal) != 100 {
+	if addr != 4 || !exists || orgVal != 100 {
 		t.Error("setex value 2")
 	}
 
@@ -128,7 +128,7 @@ func TestSetEx(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if addr != 0 || !exists || ValueDecode[int](orgVal) != 200 {
+	if addr != 0 || !exists || orgVal != 200 {
 		t.Error("setex value 3")
 	}
 
@@ -137,7 +137,7 @@ func TestSetEx(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if addr != 4 || !exists || ValueDecode[int](orgVal) != 200 {
+	if addr != 4 || !exists || orgVal != 200 {
 		t.Error("setex value 4")
 	}
 
@@ -176,7 +176,7 @@ func TestSetEx(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !hasLink || rv == nil || ValueDecode[int](rv.CurrentValue) != 200 || rv.Sk.Path != "/client/test/key" {
+	if !hasLink || rv == nil || rv.CurrentValue != 200 || rv.Sk.Path != "/client/test/key" {
 		t.Error("relationship")
 	}
 
@@ -364,7 +364,7 @@ func TestHistory(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !exists || !bytes.Equal([]byte("test"), value) {
+	if !exists || !bytes.Equal([]byte("test"), value.([]byte)) {
 		t.Error("first value")
 	}
 }
@@ -425,7 +425,7 @@ func TestSetDelKV(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !kr || !vr || !bytes.Equal(ov, []byte("test")) {
+	if !kr || !vr || !bytes.Equal(ov.([]byte), []byte("test")) {
 		t.Error("remove it")
 	}
 
@@ -464,7 +464,7 @@ func TestSetDelV(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !removed || !bytes.Equal(ov, []byte("test")) {
+	if !removed || !bytes.Equal(ov.([]byte), []byte("test")) {
 		t.Error("remove it")
 	}
 
@@ -659,7 +659,7 @@ func TestAddrValueLookup(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !ke || !ve || sk.Path != "/foo" || len(sk.Tokens) != 1 || !bytes.Equal(val, []byte("test")) {
+	if !ke || !ve || sk.Path != "/foo" || len(sk.Tokens) != 1 || !bytes.Equal(val.([]byte), []byte("test")) {
 		t.Error("verify foo")
 	}
 }
@@ -731,16 +731,16 @@ func TestMatchingKeys(t *testing.T) {
 func TestMatchingValues(t *testing.T) {
 	_, tsc := testSetup(t)
 
-	tsc.SetKeyValue(MakeStoreKey("cat"), []byte("1"))
-	tsc.SetKeyValue(MakeStoreKey("dog/s"), []byte("2"))
-	tsc.SetKeyValue(MakeStoreKey("mouse"), []byte("3"))
+	tsc.SetKeyValue(MakeStoreKey("cat"), "1")
+	tsc.SetKeyValue(MakeStoreKey("dog/s"), "2")
+	tsc.SetKeyValue(MakeStoreKey("mouse"), "3")
 
 	values, err := tsc.GetMatchingKeyValues(MakeStoreKey("*o*"), 0, 10)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(values) != 2 || values[0].Key != `/dog\ss` || values[0].HasChildren || !bytes.Equal(values[0].CurrentValue, []byte("2")) ||
-		values[1].Key != `/mouse` || values[1].HasChildren || !bytes.Equal(values[1].CurrentValue, []byte("3")) {
+	if len(values) != 2 || values[0].Key != `/dog\ss` || values[0].HasChildren || values[0].CurrentValue != "2" ||
+		values[1].Key != `/mouse` || values[1].HasChildren || values[1].CurrentValue != "3" {
 		t.Error("match pattern")
 	}
 
@@ -748,7 +748,7 @@ func TestMatchingValues(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(values) != 1 || values[0].Key != `/dog\ss` || values[0].HasChildren || !bytes.Equal(values[0].CurrentValue, []byte("2")) {
+	if len(values) != 1 || values[0].Key != `/dog\ss` || values[0].HasChildren || values[0].CurrentValue != "2" {
 		t.Error("limit")
 	}
 
@@ -756,7 +756,7 @@ func TestMatchingValues(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(values) != 1 || values[0].Key != `/mouse` || values[0].HasChildren || !bytes.Equal(values[0].CurrentValue, []byte("3")) {
+	if len(values) != 1 || values[0].Key != `/mouse` || values[0].HasChildren || values[0].CurrentValue != "3" {
 		t.Error("start")
 	}
 }
@@ -1148,5 +1148,27 @@ func TestJsonMergeBase64(t *testing.T) {
 	data, err := tsc.GetKeyAsJsonBase64(sk)
 	if data != "eyJhbmltYWxzIjp7ImNhdCI6eyJzb3VuZCI6Im1lb3cifSwiZG9nIjp7ImJyZWVkcyI6MzYwLCJzb3VuZCI6ImJhcmsifSwiZm94Ijp7InNvdW5kIjoiaG93bCJ9fX0=" || err != nil {
 		t.Error("get json 2")
+	}
+}
+
+func TestCalculateKeyValue(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	sk := MakeStoreKey("test")
+
+	addr, modified, err := tsc.CalculateKeyValue(sk, "i+1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if addr != 2 || !modified {
+		t.Error("calc increment")
+	}
+
+	value, ke, vs, err := tsc.GetKeyValue(sk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ke || !vs || value != 1 {
+		t.Error("value verify")
 	}
 }

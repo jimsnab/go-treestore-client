@@ -206,8 +206,18 @@ func (tsc *tsClient) SetKey(sk StoreKey) (address StoreAddress, exists bool, err
 	return
 }
 
-func (tsc *tsClient) SetKeyValue(sk StoreKey, value []byte) (address StoreAddress, firstValue bool, err error) {
-	response, err := tsc.apiCall("setv", string(sk.Path), valueEscape(value))
+func (tsc *tsClient) SetKeyValue(sk StoreKey, value any) (address StoreAddress, firstValue bool, err error) {
+	val, valType, err := nativeValueToCmdline(value)
+	if err != nil {
+		return
+	}
+
+	args := []string{"setv", string(sk.Path), val}
+	if valType != "" {
+		args = append(args, "--value-type", valType)
+	}
+
+	response, err := tsc.apiCall(args...)
 	if err != nil {
 		return
 	}
@@ -217,13 +227,22 @@ func (tsc *tsClient) SetKeyValue(sk StoreKey, value []byte) (address StoreAddres
 	return
 }
 
-func (tsc *tsClient) SetKeyValueEx(sk StoreKey, value []byte, flags SetExFlags, expire *time.Time, relationships []StoreAddress) (address StoreAddress, exists bool, originalValue []byte, err error) {
+func (tsc *tsClient) SetKeyValueEx(sk StoreKey, value any, flags SetExFlags, expire *time.Time, relationships []StoreAddress) (address StoreAddress, exists bool, originalValue any, err error) {
 	args := []string{"setex", string(sk.Path)}
 	if (flags & SetExNoValueUpdate) == 0 {
 		if value == nil {
 			args = append(args, "--nil")
 		} else {
-			args = append(args, "--value", valueEscape(value))
+			var val, valType string
+			val, valType, err = nativeValueToCmdline(value)
+			if err != nil {
+				return
+			}
+
+			args = append(args, "--value", val)
+			if valType != "" {
+				args = append(args, "--value-type", valType)
+			}
 		}
 	}
 
@@ -256,12 +275,14 @@ func (tsc *tsClient) SetKeyValueEx(sk StoreKey, value []byte, flags SetExFlags, 
 	address = responseAddress(response["address"])
 	exists = responseBool(response["exists"])
 
-	orgVal, hasOrgVal := response["orginal_value"].(string)
+	orgVal, hasOrgVal := response["original_value"].(string)
 	if hasOrgVal {
-		originalValue = valueUnescape(orgVal)
+		orgValType, _ := response["original_type"].(string)
+		if originalValue, err = cmdlineToNativeValue(orgVal, orgValType); err != nil {
+			return
+		}
 	}
 	return
-
 }
 
 func (tsc *tsClient) IsKeyIndexed(sk StoreKey) (address StoreAddress, exists bool, err error) {
@@ -312,7 +333,7 @@ func (tsc *tsClient) SetKeyTtl(sk StoreKey, expiration *time.Time) (exists bool,
 	return
 }
 
-func (tsc *tsClient) GetKeyValue(sk StoreKey) (value []byte, keyExists, valueExists bool, err error) {
+func (tsc *tsClient) GetKeyValue(sk StoreKey) (value any, keyExists, valueExists bool, err error) {
 	response, err := tsc.apiCall("getv", string(sk.Path))
 	if err != nil {
 		return
@@ -323,7 +344,11 @@ func (tsc *tsClient) GetKeyValue(sk StoreKey) (value []byte, keyExists, valueExi
 		var valStr string
 		valStr, valueExists = response["value"].(string)
 		if valueExists {
-			value = valueUnescape(valStr)
+			valType, _ := response["type"].(string)
+			value, err = cmdlineToNativeValue(valStr, valType)
+			if err != nil {
+				return
+			}
 		}
 	}
 	return
@@ -352,7 +377,7 @@ func (tsc *tsClient) SetKeyValueTtl(sk StoreKey, expiration *time.Time) (exists 
 	return
 }
 
-func (tsc *tsClient) GetKeyValueAtTime(sk StoreKey, when *time.Time) (value []byte, exists bool, err error) {
+func (tsc *tsClient) GetKeyValueAtTime(sk StoreKey, when *time.Time) (value any, exists bool, err error) {
 	response, err := tsc.apiCall("vat", string(sk.Path), requestEpochNs(when))
 	if err != nil {
 		return
@@ -361,12 +386,15 @@ func (tsc *tsClient) GetKeyValueAtTime(sk StoreKey, when *time.Time) (value []by
 	var valStr string
 	valStr, exists = response["value"].(string)
 	if exists {
-		value = valueUnescape(valStr)
+		valType, _ := response["value_type"].(string)
+		if value, err = cmdlineToNativeValue(valStr, valType); err != nil {
+			return
+		}
 	}
 	return
 }
 
-func (tsc *tsClient) DeleteKeyWithValue(sk StoreKey, clean bool) (removed bool, originalValue []byte, err error) {
+func (tsc *tsClient) DeleteKeyWithValue(sk StoreKey, clean bool) (removed bool, originalValue any, err error) {
 	args := []string{"delv", string(sk.Path)}
 	if clean {
 		args = append(args, "--clean")
@@ -379,12 +407,15 @@ func (tsc *tsClient) DeleteKeyWithValue(sk StoreKey, clean bool) (removed bool, 
 	var orgValStr string
 	orgValStr, removed = response["original_value"].(string)
 	if removed {
-		originalValue = valueUnescape(orgValStr)
+		orgValType, _ := response["original_type"].(string)
+		if originalValue, err = cmdlineToNativeValue(orgValStr, orgValType); err != nil {
+			return
+		}
 	}
 	return
 }
 
-func (tsc *tsClient) DeleteKey(sk StoreKey) (keyRemoved, valueRemoved bool, originalValue []byte, err error) {
+func (tsc *tsClient) DeleteKey(sk StoreKey) (keyRemoved, valueRemoved bool, originalValue any, err error) {
 	response, err := tsc.apiCall("delk", string(sk.Path))
 	if err != nil {
 		return
@@ -395,7 +426,10 @@ func (tsc *tsClient) DeleteKey(sk StoreKey) (keyRemoved, valueRemoved bool, orig
 	var orgValStr string
 	orgValStr, valueRemoved = response["original_value"].(string)
 	if valueRemoved {
-		originalValue = valueUnescape(orgValStr)
+		orgValType, _ := response["original_type"].(string)
+		if originalValue, err = cmdlineToNativeValue(orgValStr, orgValType); err != nil {
+			return
+		}
 	}
 	return
 }
@@ -465,7 +499,7 @@ func (tsc *tsClient) KeyFromAddress(addr StoreAddress) (sk StoreKey, exists bool
 	return
 }
 
-func (tsc *tsClient) KeyValueFromAddress(addr StoreAddress) (keyExists, valueExists bool, sk StoreKey, value []byte, err error) {
+func (tsc *tsClient) KeyValueFromAddress(addr StoreAddress) (keyExists, valueExists bool, sk StoreKey, value any, err error) {
 	response, err := tsc.apiCall("addrv", requestAddress(addr))
 	if err != nil {
 		return
@@ -478,7 +512,10 @@ func (tsc *tsClient) KeyValueFromAddress(addr StoreAddress) (keyExists, valueExi
 		var valStr string
 		valStr, valueExists = response["value"].(string)
 		if valueExists {
-			value = valueUnescape(valStr)
+			valType, _ := response["type"].(string)
+			if value, err = cmdlineToNativeValue(valStr, valType); err != nil {
+				return
+			}
 		}
 	}
 	return
@@ -500,7 +537,12 @@ func (tsc *tsClient) GetRelationshipValue(sk StoreKey, relationshipIndex int) (h
 
 		valStr, valueExists := response["value"].(string)
 		if valueExists {
-			rv.CurrentValue = valueUnescape(valStr)
+			valType, _ := response["type"].(string)
+			var v any
+			if v, err = cmdlineToNativeValue(valStr, valType); err != nil {
+				return
+			}
+			rv.CurrentValue = v
 		}
 	}
 	return
@@ -546,6 +588,7 @@ func (tsc *tsClient) GetMatchingKeys(skPattern StoreKey, startAt, limit int) (ke
 		hasValue := responseBool(key["has_value"])
 		hasChildren := responseBool(key["has_children"])
 		valStr, vsExists := key["current_value"].(string)
+		valType, _ := key["current_type"].(string)
 
 		rawRelationships, relExists := key["relationships"].([]any)
 		var relationships []StoreAddress
@@ -573,7 +616,11 @@ func (tsc *tsClient) GetMatchingKeys(skPattern StoreKey, startAt, limit int) (ke
 			Relationships: relationships,
 		}
 		if vsExists {
-			km.CurrentValue = valueUnescape(valStr)
+			var v any
+			if v, err = cmdlineToNativeValue(valStr, valType); err != nil {
+				return
+			}
+			km.CurrentValue = v
 		}
 
 		keys = append(keys, km)
@@ -595,6 +642,7 @@ func (tsc *tsClient) GetMatchingKeyValues(skPattern StoreKey, startAt, limit int
 		tokenPath := value["key"].(string)
 		hasChildren := responseBool(value["has_children"])
 		valStr, vsExists := value["current_value"].(string)
+		valType, _ := value["current_type"].(string)
 
 		rawRelationships, relExists := value["relationships"].([]any)
 		var relationships []StoreAddress
@@ -621,7 +669,11 @@ func (tsc *tsClient) GetMatchingKeyValues(skPattern StoreKey, startAt, limit int
 			Relationships: relationships,
 		}
 		if vsExists {
-			kvm.CurrentValue = valueUnescape(valStr)
+			var v any
+			if v, err = cmdlineToNativeValue(valStr, valType); err != nil {
+				return
+			}
+			kvm.CurrentValue = v
 		}
 
 		values = append(values, kvm)
@@ -801,5 +853,16 @@ func (tsc *tsClient) MergeKeyJsonBase64(sk StoreKey, b64 string) (err error) {
 		return
 	}
 
+	return
+}
+
+func (tsc *tsClient) CalculateKeyValue(sk StoreKey, expression string) (address StoreAddress, modified bool, err error) {
+	response, err := tsc.apiCall("calc", string(sk.Path), expression)
+	if err != nil {
+		return
+	}
+
+	address64, modified := response["address"].(float64)
+	address = StoreAddress(address64)
 	return
 }
