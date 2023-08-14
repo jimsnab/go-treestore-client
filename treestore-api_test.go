@@ -875,6 +875,39 @@ func TestJsonSet(t *testing.T) {
 	doesJsonMatch(t, "set", jsonData, data)
 }
 
+func TestJsonSetBytes(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	sk := MakeStoreKey("test")
+
+	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
+	jsonDataB64 := base64.StdEncoding.EncodeToString(jsonText)
+
+	replaced, err := tsc.SetKeyJsonBase64(sk, jsonDataB64)
+	if replaced || err != nil {
+		t.Error("set json")
+	}
+
+	data, err := tsc.GetKeyAsJsonBytes(sk)
+	if err != nil {
+		t.Error("get json")
+	}
+
+	var m map[string]any
+	err = json.Unmarshal(data, &m)
+	if err != nil {
+		t.Error("unmarshal")
+	}
+
+	var jsonData map[string]any
+	err = json.Unmarshal(jsonText, &jsonData)
+	if err != nil {
+		t.Fatal("test data unmarshal")
+	}
+
+	doesJsonMatch(t, "set", jsonData, m)
+}
+
 func TestJsonSetBase64(t *testing.T) {
 	_, tsc := testSetup(t)
 

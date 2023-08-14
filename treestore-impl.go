@@ -1,6 +1,7 @@
 package treestore_client
 
 import (
+	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
@@ -676,6 +677,22 @@ func (tsc *tsClient) GetKeyAsJson(sk StoreKey) (jsonData any, err error) {
 	}
 
 	jsonData = response["data"]
+	return
+}
+
+func (tsc *tsClient) GetKeyAsJsonBytes(sk StoreKey) (bytes []byte, err error) {
+	response, err := tsc.apiCall("getjson", string(sk.Path), "--base64")
+	if err != nil {
+		return
+	}
+
+	b64, valid := response["base64"].(string)
+	if !valid {
+		err = errors.New("invalid getjson response")
+		return
+	}
+
+	bytes, err = base64.StdEncoding.DecodeString(b64)
 	return
 }
 
