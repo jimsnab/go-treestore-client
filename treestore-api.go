@@ -292,7 +292,7 @@ type (
 		// For ternary conditionals, an operation can be skipped by using fail().
 		//
 		//	"i>100?i+1:fail()"        no modifications if the sk value is < 100
-		CalculateKeyValue(sk StoreKey, expression string) (address StoreAddress, modified bool, err error)
+		CalculateKeyValue(sk StoreKey, expression string) (address StoreAddress, newValue any, err error)
 	}
 )
 

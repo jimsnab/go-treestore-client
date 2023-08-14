@@ -1156,11 +1156,11 @@ func TestCalculateKeyValue(t *testing.T) {
 
 	sk := MakeStoreKey("test")
 
-	addr, modified, err := tsc.CalculateKeyValue(sk, "i+1")
+	addr, newVal, err := tsc.CalculateKeyValue(sk, "i+1")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if addr != 2 || !modified {
+	if addr != 2 || newVal != 1 {
 		t.Error("calc increment")
 	}
 

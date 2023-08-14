@@ -856,13 +856,22 @@ func (tsc *tsClient) MergeKeyJsonBase64(sk StoreKey, b64 string) (err error) {
 	return
 }
 
-func (tsc *tsClient) CalculateKeyValue(sk StoreKey, expression string) (address StoreAddress, modified bool, err error) {
+func (tsc *tsClient) CalculateKeyValue(sk StoreKey, expression string) (address StoreAddress, newValue any, err error) {
 	response, err := tsc.apiCall("calc", string(sk.Path), expression)
 	if err != nil {
 		return
 	}
 
 	address64, modified := response["address"].(float64)
-	address = StoreAddress(address64)
+	if modified {
+		address = StoreAddress(address64)
+
+		valStr, _ := response["value"].(string)
+		valType, _ := response["type"].(string)
+
+		if newValue, err = cmdlineToNativeValue(valStr, valType); err != nil {
+			return
+		}
+	}
 	return
 }
