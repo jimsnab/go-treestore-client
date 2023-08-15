@@ -383,6 +383,6 @@ func AppendStoreKeySegments(baseSk StoreKey, parts ...TokenSegment) StoreKey {
 	return StoreKey(treestore.AppendStoreKeySegments(treestore.StoreKey(baseSk), segs...))
 }
 
-func AppendStoreKeySegmentsStrings(baseSk StoreKey, parts ...string) StoreKey {
-	return StoreKey(treestore.AppendStoreKeySegmentsStrings(treestore.StoreKey(baseSk), parts...))
+func AppendStoreKeySegmentStrings(baseSk StoreKey, parts ...string) StoreKey {
+	return StoreKey(treestore.AppendStoreKeySegmentStrings(treestore.StoreKey(baseSk), parts...))
 }
