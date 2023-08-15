@@ -190,6 +190,41 @@ func TestSetEx(t *testing.T) {
 	}
 }
 
+func TestSetKeyNoValueRelationship(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	sk1 := MakeStoreKey("a")
+	sk2 := MakeStoreKey("b")
+
+	addr1, _, err := tsc.SetKey(sk1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if addr1 != 2 {
+		t.Error("set key")
+	}
+
+	addr2, _, _, err := tsc.SetKeyValueEx(sk2, nil, SetExNoValueUpdate, nil, []StoreAddress{addr1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if addr2 != 3 {
+		t.Error("set key 2")
+	}
+
+	hasLink, rv, err := tsc.GetRelationshipValue(sk2, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasLink || rv == nil || rv.Sk.Path != "/a" {
+		t.Error("key link")
+	}
+
+	if rv.CurrentValue != nil {
+		t.Error("value nil")
+	}
+}
+
 func TestSetGetKeyTtl(t *testing.T) {
 	_, tsc := testSetup(t)
 
