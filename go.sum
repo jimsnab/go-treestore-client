@@ -153,6 +153,8 @@ github.com/jimsnab/go-treestore v0.0.0-20230814215451-57613b29b4d1 h1:V0pa7p0eFu
 github.com/jimsnab/go-treestore v0.0.0-20230814215451-57613b29b4d1/go.mod h1:FK1nd2VKfR+5KDjQczZTxETVl5gQF6MtRMhECBh/Tuk=
 github.com/jimsnab/go-treestore v0.0.0-20230814220537-b4fe25f46128 h1:t+U3sa3cGUjJZAp4VVCwuLYz27DOaBeyx9tRcrcAXl8=
 github.com/jimsnab/go-treestore v0.0.0-20230814220537-b4fe25f46128/go.mod h1:FK1nd2VKfR+5KDjQczZTxETVl5gQF6MtRMhECBh/Tuk=
+github.com/jimsnab/go-treestore v0.0.0-20230815131202-36475db6dc17 h1:tKvz/yLpQNY7FLbzj/WfELuiNbE5fraeb5fvhP1YS3g=
+github.com/jimsnab/go-treestore v0.0.0-20230815131202-36475db6dc17/go.mod h1:FK1nd2VKfR+5KDjQczZTxETVl5gQF6MtRMhECBh/Tuk=
 github.com/jimsnab/go-treestore-cmdline v0.0.0-20230804173703-fd7e3a45f8ed h1:eSo4P/fYpylzhK4tYaJhygjwbsVUCHJKth3qFld1mgI=
 github.com/jimsnab/go-treestore-cmdline v0.0.0-20230804173703-fd7e3a45f8ed/go.mod h1:C4QZuPBbO7zk7/O+9/T2bEJfaj+LzmQrcv7ZdFD86s0=
 github.com/jimsnab/go-treestore-cmdline v0.0.0-20230804174526-f61fd45d4055 h1:w3jLiISXRDM3MKKbn4jFujcDmGSUljtlo4olCR0Mgdw=
@@ -201,6 +203,8 @@ github.com/jimsnab/go-treestore-cmdline v0.0.0-20230814215635-b545f8ebc372 h1:mk
 github.com/jimsnab/go-treestore-cmdline v0.0.0-20230814215635-b545f8ebc372/go.mod h1:a5gAXs9D76Z9BbAyeKZrg/27p2fpqPysiJlCoGYa4uU=
 github.com/jimsnab/go-treestore-cmdline v0.0.0-20230814220609-d97dabd6b51f h1:2ABZ79Ohl2nphI59y2aFmweSo5GBh/VMwEFUcVBw7lc=
 github.com/jimsnab/go-treestore-cmdline v0.0.0-20230814220609-d97dabd6b51f/go.mod h1:MDIvSUsuk5WTFBSwl03Q9Gndzt/9CtDuH+Ho3sm3i9U=
+github.com/jimsnab/go-treestore-cmdline v0.0.0-20230815131245-5b4635d5ab4b h1:2groACe5mjAf5nn6f8yjlb4xBIrg8LPOHo/Cmr0PHmQ=
+github.com/jimsnab/go-treestore-cmdline v0.0.0-20230815131245-5b4635d5ab4b/go.mod h1:WW+pqYHorStsvVGnEFZIkiznUNvrLMaNjQCPv6Ubehk=
 github.com/jstemmer/go-junit-report v0.0.0-20190106144839-af01ea7f8024/go.mod h1:6v2b51hI/fHJwM22ozAgKL4VKDeJcHhJFhtBdhmNjmU=
 github.com/jstemmer/go-junit-report v0.9.1/go.mod h1:Brl9GWCQeLvo8nXZwPNNblvFj/XSXhF0NWZEnDohbsk=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=

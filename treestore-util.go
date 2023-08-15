@@ -374,3 +374,15 @@ func MakeStoreKeyFromTokenSegments(segments ...TokenSegment) StoreKey {
 func SplitStoreKey(sk StoreKey) []string {
 	return treestore.SplitStoreKey(treestore.StoreKey(sk))
 }
+
+func AppendStoreKeySegments(baseSk StoreKey, parts ...TokenSegment) StoreKey {
+	segs := make([]treestore.TokenSegment, 0, len(parts))
+	for _, part := range parts {
+		segs = append(segs, treestore.TokenSegment(part))
+	}
+	return StoreKey(treestore.AppendStoreKeySegments(treestore.StoreKey(baseSk), segs...))
+}
+
+func AppendStoreKeySegmentsStrings(baseSk StoreKey, parts ...string) StoreKey {
+	return StoreKey(treestore.AppendStoreKeySegmentsStrings(treestore.StoreKey(baseSk), parts...))
+}
