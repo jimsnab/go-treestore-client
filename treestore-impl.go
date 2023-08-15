@@ -768,7 +768,7 @@ func (tsc *tsClient) GetKeyAsJsonBase64(sk StoreKey) (b64 string, err error) {
 	return
 }
 
-func (tsc *tsClient) SetKeyJson(sk StoreKey, jsonData any) (replaced bool, err error) {
+func (tsc *tsClient) SetKeyJson(sk StoreKey, jsonData any) (replaced bool, address StoreAddress, err error) {
 	marshalled, err := json.Marshal(jsonData)
 	if err != nil {
 		return
@@ -780,20 +780,28 @@ func (tsc *tsClient) SetKeyJson(sk StoreKey, jsonData any) (replaced bool, err e
 	}
 
 	replaced, _ = response["replaced"].(bool)
+	addrStr, exists := response["address"].(float64)
+	if exists {
+		address = responseAddress(addrStr)
+	}
 	return
 }
 
-func (tsc *tsClient) SetKeyJsonBase64(sk StoreKey, b64 string) (replaced bool, err error) {
+func (tsc *tsClient) SetKeyJsonBase64(sk StoreKey, b64 string) (replaced bool, address StoreAddress, err error) {
 	response, err := tsc.apiCall("setjson", string(sk.Path), b64, "--base64")
 	if err != nil {
 		return
 	}
 
 	replaced, _ = response["replaced"].(bool)
+	addrStr, exists := response["address"].(float64)
+	if exists {
+		address = responseAddress(addrStr)
+	}
 	return
 }
 
-func (tsc *tsClient) CreateKeyJson(sk StoreKey, jsonData any) (created bool, err error) {
+func (tsc *tsClient) CreateKeyJson(sk StoreKey, jsonData any) (created bool, address StoreAddress, err error) {
 	marshalled, err := json.Marshal(jsonData)
 	if err != nil {
 		return
@@ -804,21 +812,29 @@ func (tsc *tsClient) CreateKeyJson(sk StoreKey, jsonData any) (created bool, err
 		return
 	}
 
-	created, _ = response["created"].(bool)
+	addrStr, exists := response["address"].(float64)
+	if exists {
+		created = true
+		address = responseAddress(addrStr)
+	}
 	return
 }
 
-func (tsc *tsClient) CreateKeyJsonBase64(sk StoreKey, b64 string) (created bool, err error) {
+func (tsc *tsClient) CreateKeyJsonBase64(sk StoreKey, b64 string) (created bool, address StoreAddress, err error) {
 	response, err := tsc.apiCall("createjson", string(sk.Path), b64, "--base64")
 	if err != nil {
 		return
 	}
 
-	created, _ = response["created"].(bool)
+	addrStr, exists := response["address"].(float64)
+	if exists {
+		created = true
+		address = responseAddress(addrStr)
+	}
 	return
 }
 
-func (tsc *tsClient) ReplaceKeyJson(sk StoreKey, jsonData any) (replaced bool, err error) {
+func (tsc *tsClient) ReplaceKeyJson(sk StoreKey, jsonData any) (replaced bool, address StoreAddress, err error) {
 	marshalled, err := json.Marshal(jsonData)
 	if err != nil {
 		return
@@ -829,40 +845,56 @@ func (tsc *tsClient) ReplaceKeyJson(sk StoreKey, jsonData any) (replaced bool, e
 		return
 	}
 
-	replaced, _ = response["replaced"].(bool)
+	addrStr, exists := response["address"].(float64)
+	if exists {
+		replaced = true
+		address = responseAddress(addrStr)
+	}
 	return
 }
 
-func (tsc *tsClient) ReplaceKeyJsonBase64(sk StoreKey, b64 string) (replaced bool, err error) {
+func (tsc *tsClient) ReplaceKeyJsonBase64(sk StoreKey, b64 string) (replaced bool, address StoreAddress, err error) {
 	response, err := tsc.apiCall("replacejson", string(sk.Path), b64, "--base64")
 	if err != nil {
 		return
 	}
 
-	replaced, _ = response["replaced"].(bool)
+	addrStr, exists := response["address"].(float64)
+	if exists {
+		replaced = true
+		address = responseAddress(addrStr)
+	}
 	return
 }
 
-func (tsc *tsClient) MergeKeyJson(sk StoreKey, jsonData any) (err error) {
+func (tsc *tsClient) MergeKeyJson(sk StoreKey, jsonData any) (address StoreAddress, err error) {
 	marshalled, err := json.Marshal(jsonData)
 	if err != nil {
 		return
 	}
 
-	_, err = tsc.apiCall("mergejson", string(sk.Path), string(marshalled))
+	response, err := tsc.apiCall("mergejson", string(sk.Path), string(marshalled))
 	if err != nil {
 		return
 	}
 
+	addrStr, exists := response["address"].(float64)
+	if exists {
+		address = responseAddress(addrStr)
+	}
 	return
 }
 
-func (tsc *tsClient) MergeKeyJsonBase64(sk StoreKey, b64 string) (err error) {
-	_, err = tsc.apiCall("mergejson", string(sk.Path), b64, "--base64")
+func (tsc *tsClient) MergeKeyJsonBase64(sk StoreKey, b64 string) (address StoreAddress, err error) {
+	response, err := tsc.apiCall("mergejson", string(sk.Path), b64, "--base64")
 	if err != nil {
 		return
 	}
 
+	addrStr, exists := response["address"].(float64)
+	if exists {
+		address = responseAddress(addrStr)
+	}
 	return
 }
 

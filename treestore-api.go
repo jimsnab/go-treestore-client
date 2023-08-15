@@ -228,42 +228,42 @@ type (
 		// Takes the generalized json data and stores it at the specified key path.
 		// If the sk exists, its value, children and history are deleted, and the new
 		// json data takes its place.
-		SetKeyJson(sk StoreKey, jsonData any) (replaced bool, err error)
+		SetKeyJson(sk StoreKey, jsonData any) (replaced bool, address StoreAddress, err error)
 
 		// Takes the generalized json data and stores it at the specified key path.
 		// If the sk exists, its value, children and history are deleted, and the new
 		// json data takes its place.
-		SetKeyJsonBase64(sk StoreKey, b64 string) (replaced bool, err error)
+		SetKeyJsonBase64(sk StoreKey, b64 string) (replaced bool, address StoreAddress, err error)
 
 		// Takes the generalized json data and stores it at the specified key path.
 		// If the sk exists, no changes are made. Otherwise a new key node is created
 		// with its child data set according to the json structure.
-		CreateKeyJson(sk StoreKey, jsonData any) (created bool, err error)
+		CreateKeyJson(sk StoreKey, jsonData any) (created bool, address StoreAddress, err error)
 
 		// Takes the generalized json data and stores it at the specified key path.
 		// If the sk exists, no changes are made. Otherwise a new key node is created
 		// with its child data set according to the json structure.
-		CreateKeyJsonBase64(sk StoreKey, b64 string) (created bool, err error)
+		CreateKeyJsonBase64(sk StoreKey, b64 string) (created bool, address StoreAddress, err error)
 
 		// Takes the generalized json data and stores it at the specified key path.
 		// If the sk doesn't exists, no changes are made. Otherwise the key node's
 		// value and children are deleted, and the new json data takes its place.
-		ReplaceKeyJson(sk StoreKey, jsonData any) (replaced bool, err error)
+		ReplaceKeyJson(sk StoreKey, jsonData any) (replaced bool, address StoreAddress, err error)
 
 		// Takes the generalized json data and stores it at the specified key path.
 		// If the sk doesn't exists, no changes are made. Otherwise the key node's
 		// value and children are deleted, and the new json data takes its place.
-		ReplaceKeyJsonBase64(sk StoreKey, b64 string) (replaced bool, err error)
+		ReplaceKeyJsonBase64(sk StoreKey, b64 string) (replaced bool, address StoreAddress, err error)
 
 		// Overlays json data on top of existing data. This is one of the slower APIs
 		// because each part of json is independently written to the store, and a
 		// write lock is required across the whole operation.
-		MergeKeyJson(sk StoreKey, jsonData any) (err error)
+		MergeKeyJson(sk StoreKey, jsonData any) (address StoreAddress, err error)
 
 		// Overlays json data on top of existing data. This is one of the slower APIs
 		// because each part of json is independently written to the store, and a
 		// write lock is required across the whole operation.
-		MergeKeyJsonBase64(sk StoreKey, b64 string) (err error)
+		MergeKeyJsonBase64(sk StoreKey, b64 string) (address StoreAddress, err error)
 
 		// Evaluate a math expression and store the result.
 		//
