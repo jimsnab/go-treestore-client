@@ -307,6 +307,10 @@ type (
 		//
 		//	"i>100?i+1:fail()"        no modifications if the sk value is < 100
 		CalculateKeyValue(sk StoreKey, expression string) (address StoreAddress, newValue any, err error)
+
+		// Calls the treestore sending in value-escaped arguments, and receiving back a map parsed
+		// from the json response.
+		RawCommand(valueEscapedArgs ...string) (response map[string]any, err error)
 	}
 )
 

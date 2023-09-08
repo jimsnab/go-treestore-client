@@ -70,7 +70,7 @@ func (tsc *tsClient) Close() (err error) {
 	return
 }
 
-func (tsc *tsClient) apiCall(args ...string) (response map[string]any, err error) {
+func (tsc *tsClient) RawCommand(args ...string) (response map[string]any, err error) {
 	tsc.invoked.Add(1)
 	defer tsc.invoked.Add(-1)
 
@@ -196,7 +196,7 @@ func (tsc *tsClient) parseResponse() (length int, response map[string]any, err e
 }
 
 func (tsc *tsClient) SetKey(sk StoreKey) (address StoreAddress, exists bool, err error) {
-	response, err := tsc.apiCall("setk", string(sk.Path))
+	response, err := tsc.RawCommand("setk", string(sk.Path))
 	if err != nil {
 		return
 	}
@@ -217,7 +217,7 @@ func (tsc *tsClient) SetKeyValue(sk StoreKey, value any) (address StoreAddress, 
 		args = append(args, "--value-type", valType)
 	}
 
-	response, err := tsc.apiCall(args...)
+	response, err := tsc.RawCommand(args...)
 	if err != nil {
 		return
 	}
@@ -267,7 +267,7 @@ func (tsc *tsClient) SetKeyValueEx(sk StoreKey, value any, flags SetExFlags, exp
 		args = append(args, "--relationships", sb.String())
 	}
 
-	response, err := tsc.apiCall(args...)
+	response, err := tsc.RawCommand(args...)
 	if err != nil {
 		return
 	}
@@ -286,7 +286,7 @@ func (tsc *tsClient) SetKeyValueEx(sk StoreKey, value any, flags SetExFlags, exp
 }
 
 func (tsc *tsClient) IsKeyIndexed(sk StoreKey) (address StoreAddress, exists bool, err error) {
-	response, err := tsc.apiCall("indexed", string(sk.Path))
+	response, err := tsc.RawCommand("indexed", string(sk.Path))
 	if err != nil {
 		return
 	}
@@ -297,7 +297,7 @@ func (tsc *tsClient) IsKeyIndexed(sk StoreKey) (address StoreAddress, exists boo
 }
 
 func (tsc *tsClient) LocateKey(sk StoreKey) (address StoreAddress, exists bool, err error) {
-	response, err := tsc.apiCall("getk", string(sk.Path))
+	response, err := tsc.RawCommand("getk", string(sk.Path))
 	if err != nil {
 		return
 	}
@@ -311,7 +311,7 @@ func (tsc *tsClient) LocateKey(sk StoreKey) (address StoreAddress, exists bool, 
 }
 
 func (tsc *tsClient) GetKeyTtl(sk StoreKey) (ttl *time.Time, err error) {
-	response, err := tsc.apiCall("ttlk", string(sk.Path))
+	response, err := tsc.RawCommand("ttlk", string(sk.Path))
 	if err != nil {
 		return
 	}
@@ -324,7 +324,7 @@ func (tsc *tsClient) GetKeyTtl(sk StoreKey) (ttl *time.Time, err error) {
 }
 
 func (tsc *tsClient) SetKeyTtl(sk StoreKey, expiration *time.Time) (exists bool, err error) {
-	response, err := tsc.apiCall("expirekns", string(sk.Path), requestEpochNs(expiration))
+	response, err := tsc.RawCommand("expirekns", string(sk.Path), requestEpochNs(expiration))
 	if err != nil {
 		return
 	}
@@ -334,7 +334,7 @@ func (tsc *tsClient) SetKeyTtl(sk StoreKey, expiration *time.Time) (exists bool,
 }
 
 func (tsc *tsClient) GetKeyValue(sk StoreKey) (value any, keyExists, valueExists bool, err error) {
-	response, err := tsc.apiCall("getv", string(sk.Path))
+	response, err := tsc.RawCommand("getv", string(sk.Path))
 	if err != nil {
 		return
 	}
@@ -355,7 +355,7 @@ func (tsc *tsClient) GetKeyValue(sk StoreKey) (value any, keyExists, valueExists
 }
 
 func (tsc *tsClient) GetKeyValueTtl(sk StoreKey) (ttl *time.Time, err error) {
-	response, err := tsc.apiCall("ttlv", string(sk.Path))
+	response, err := tsc.RawCommand("ttlv", string(sk.Path))
 	if err != nil {
 		return
 	}
@@ -368,7 +368,7 @@ func (tsc *tsClient) GetKeyValueTtl(sk StoreKey) (ttl *time.Time, err error) {
 }
 
 func (tsc *tsClient) SetKeyValueTtl(sk StoreKey, expiration *time.Time) (exists bool, err error) {
-	response, err := tsc.apiCall("expirevns", string(sk.Path), requestEpochNs(expiration))
+	response, err := tsc.RawCommand("expirevns", string(sk.Path), requestEpochNs(expiration))
 	if err != nil {
 		return
 	}
@@ -378,7 +378,7 @@ func (tsc *tsClient) SetKeyValueTtl(sk StoreKey, expiration *time.Time) (exists 
 }
 
 func (tsc *tsClient) GetKeyValueAtTime(sk StoreKey, when *time.Time) (value any, exists bool, err error) {
-	response, err := tsc.apiCall("vat", string(sk.Path), requestEpochNs(when))
+	response, err := tsc.RawCommand("vat", string(sk.Path), requestEpochNs(when))
 	if err != nil {
 		return
 	}
@@ -399,7 +399,7 @@ func (tsc *tsClient) DeleteKeyWithValue(sk StoreKey, clean bool) (removed bool, 
 	if clean {
 		args = append(args, "--clean")
 	}
-	response, err := tsc.apiCall(args...)
+	response, err := tsc.RawCommand(args...)
 	if err != nil {
 		return
 	}
@@ -416,7 +416,7 @@ func (tsc *tsClient) DeleteKeyWithValue(sk StoreKey, clean bool) (removed bool, 
 }
 
 func (tsc *tsClient) DeleteKey(sk StoreKey) (keyRemoved, valueRemoved bool, originalValue any, err error) {
-	response, err := tsc.apiCall("delk", string(sk.Path))
+	response, err := tsc.RawCommand("delk", string(sk.Path))
 	if err != nil {
 		return
 	}
@@ -435,7 +435,7 @@ func (tsc *tsClient) DeleteKey(sk StoreKey) (keyRemoved, valueRemoved bool, orig
 }
 
 func (tsc *tsClient) DeleteKeyTree(sk StoreKey) (removed bool, err error) {
-	response, err := tsc.apiCall("deltree", string(sk.Path))
+	response, err := tsc.RawCommand("deltree", string(sk.Path))
 	if err != nil {
 		return
 	}
@@ -445,7 +445,7 @@ func (tsc *tsClient) DeleteKeyTree(sk StoreKey) (removed bool, err error) {
 }
 
 func (tsc *tsClient) SetMetadataAttribute(sk StoreKey, attribute, value string) (keyExists bool, priorValue string, err error) {
-	response, err := tsc.apiCall("setmeta", string(sk.Path), attribute, value)
+	response, err := tsc.RawCommand("setmeta", string(sk.Path), attribute, value)
 	if err != nil {
 		return
 	}
@@ -456,7 +456,7 @@ func (tsc *tsClient) SetMetadataAttribute(sk StoreKey, attribute, value string) 
 }
 
 func (tsc *tsClient) ClearMetdataAttribute(sk StoreKey, attribute string) (attributeExists bool, originalValue string, err error) {
-	response, err := tsc.apiCall("delmeta", string(sk.Path), attribute)
+	response, err := tsc.RawCommand("delmeta", string(sk.Path), attribute)
 	if err != nil {
 		return
 	}
@@ -466,12 +466,12 @@ func (tsc *tsClient) ClearMetdataAttribute(sk StoreKey, attribute string) (attri
 }
 
 func (tsc *tsClient) ClearKeyMetdata(sk StoreKey) (err error) {
-	_, err = tsc.apiCall("resetmeta", string(sk.Path))
+	_, err = tsc.RawCommand("resetmeta", string(sk.Path))
 	return
 }
 
 func (tsc *tsClient) GetMetadataAttribute(sk StoreKey, attribute string) (attributeExists bool, value string, err error) {
-	response, err := tsc.apiCall("getmeta", string(sk.Path), attribute)
+	response, err := tsc.RawCommand("getmeta", string(sk.Path), attribute)
 	if err != nil {
 		return
 	}
@@ -481,7 +481,7 @@ func (tsc *tsClient) GetMetadataAttribute(sk StoreKey, attribute string) (attrib
 }
 
 func (tsc *tsClient) GetMetadataAttributes(sk StoreKey) (attributes []string, err error) {
-	response, err := tsc.apiCall("lsmeta", string(sk.Path))
+	response, err := tsc.RawCommand("lsmeta", string(sk.Path))
 	if err != nil {
 		return
 	}
@@ -497,7 +497,7 @@ func (tsc *tsClient) GetMetadataAttributes(sk StoreKey) (attributes []string, er
 }
 
 func (tsc *tsClient) KeyFromAddress(addr StoreAddress) (sk StoreKey, exists bool, err error) {
-	response, err := tsc.apiCall("addrk", requestAddress(addr))
+	response, err := tsc.RawCommand("addrk", requestAddress(addr))
 	if err != nil {
 		return
 	}
@@ -510,7 +510,7 @@ func (tsc *tsClient) KeyFromAddress(addr StoreAddress) (sk StoreKey, exists bool
 }
 
 func (tsc *tsClient) KeyValueFromAddress(addr StoreAddress) (keyExists, valueExists bool, sk StoreKey, value any, err error) {
-	response, err := tsc.apiCall("addrv", requestAddress(addr))
+	response, err := tsc.RawCommand("addrv", requestAddress(addr))
 	if err != nil {
 		return
 	}
@@ -532,7 +532,7 @@ func (tsc *tsClient) KeyValueFromAddress(addr StoreAddress) (keyExists, valueExi
 }
 
 func (tsc *tsClient) GetRelationshipValue(sk StoreKey, relationshipIndex int) (hasLink bool, rv *RelationshipValue, err error) {
-	response, err := tsc.apiCall("follow", string(sk.Path), fmt.Sprintf("%d", relationshipIndex))
+	response, err := tsc.RawCommand("follow", string(sk.Path), fmt.Sprintf("%d", relationshipIndex))
 	if err != nil {
 		return
 	}
@@ -559,7 +559,7 @@ func (tsc *tsClient) GetRelationshipValue(sk StoreKey, relationshipIndex int) (h
 }
 
 func (tsc *tsClient) GetLevelKeys(sk StoreKey, pattern string, startAt, limit int) (keys []LevelKey, err error) {
-	response, err := tsc.apiCall("nodes", string(sk.Path), pattern, "--start", fmt.Sprintf("%d", startAt), "--limit", fmt.Sprintf("%d", limit), "--detailed")
+	response, err := tsc.RawCommand("nodes", string(sk.Path), pattern, "--start", fmt.Sprintf("%d", startAt), "--limit", fmt.Sprintf("%d", limit), "--detailed")
 	if err != nil {
 		return
 	}
@@ -584,7 +584,7 @@ func (tsc *tsClient) GetLevelKeys(sk StoreKey, pattern string, startAt, limit in
 }
 
 func (tsc *tsClient) GetMatchingKeys(skPattern StoreKey, startAt, limit int) (keys []*KeyMatch, err error) {
-	response, err := tsc.apiCall("lsk", string(skPattern.Path), "--start", fmt.Sprintf("%d", startAt), "--limit", fmt.Sprintf("%d", limit), "--detailed")
+	response, err := tsc.RawCommand("lsk", string(skPattern.Path), "--start", fmt.Sprintf("%d", startAt), "--limit", fmt.Sprintf("%d", limit), "--detailed")
 	if err != nil {
 		return
 	}
@@ -639,7 +639,7 @@ func (tsc *tsClient) GetMatchingKeys(skPattern StoreKey, startAt, limit int) (ke
 }
 
 func (tsc *tsClient) GetMatchingKeyValues(skPattern StoreKey, startAt, limit int) (values []*KeyValueMatch, err error) {
-	response, err := tsc.apiCall("lsv", string(skPattern.Path), "--start", fmt.Sprintf("%d", startAt), "--limit", fmt.Sprintf("%d", limit), "--detailed")
+	response, err := tsc.RawCommand("lsv", string(skPattern.Path), "--start", fmt.Sprintf("%d", startAt), "--limit", fmt.Sprintf("%d", limit), "--detailed")
 	if err != nil {
 		return
 	}
@@ -692,7 +692,7 @@ func (tsc *tsClient) GetMatchingKeyValues(skPattern StoreKey, startAt, limit int
 }
 
 func (tsc *tsClient) Export(sk StoreKey) (jsonData any, err error) {
-	response, err := tsc.apiCall("export", string(sk.Path))
+	response, err := tsc.RawCommand("export", string(sk.Path))
 	if err != nil {
 		return
 	}
@@ -702,7 +702,7 @@ func (tsc *tsClient) Export(sk StoreKey) (jsonData any, err error) {
 }
 
 func (tsc *tsClient) ExportBase64(sk StoreKey) (b64 string, err error) {
-	response, err := tsc.apiCall("export", string(sk.Path), "--base64")
+	response, err := tsc.RawCommand("export", string(sk.Path), "--base64")
 	if err != nil {
 		return
 	}
@@ -717,7 +717,7 @@ func (tsc *tsClient) Import(sk StoreKey, jsonData any) (err error) {
 		return
 	}
 
-	_, err = tsc.apiCall("import", string(sk.Path), string(marshalled))
+	_, err = tsc.RawCommand("import", string(sk.Path), string(marshalled))
 	if err != nil {
 		return
 	}
@@ -725,7 +725,7 @@ func (tsc *tsClient) Import(sk StoreKey, jsonData any) (err error) {
 }
 
 func (tsc *tsClient) ImportBase64(sk StoreKey, b64 string) (err error) {
-	_, err = tsc.apiCall("import", string(sk.Path), b64, "--base64")
+	_, err = tsc.RawCommand("import", string(sk.Path), b64, "--base64")
 	if err != nil {
 		return
 	}
@@ -733,7 +733,7 @@ func (tsc *tsClient) ImportBase64(sk StoreKey, b64 string) (err error) {
 }
 
 func (tsc *tsClient) GetKeyAsJson(sk StoreKey) (jsonData any, err error) {
-	response, err := tsc.apiCall("getjson", string(sk.Path))
+	response, err := tsc.RawCommand("getjson", string(sk.Path))
 	if err != nil {
 		return
 	}
@@ -743,7 +743,7 @@ func (tsc *tsClient) GetKeyAsJson(sk StoreKey) (jsonData any, err error) {
 }
 
 func (tsc *tsClient) GetKeyAsJsonBytes(sk StoreKey) (bytes []byte, err error) {
-	response, err := tsc.apiCall("getjson", string(sk.Path), "--base64")
+	response, err := tsc.RawCommand("getjson", string(sk.Path), "--base64")
 	if err != nil {
 		return
 	}
@@ -759,7 +759,7 @@ func (tsc *tsClient) GetKeyAsJsonBytes(sk StoreKey) (bytes []byte, err error) {
 }
 
 func (tsc *tsClient) GetKeyAsJsonBase64(sk StoreKey) (b64 string, err error) {
-	response, err := tsc.apiCall("getjson", string(sk.Path), "--base64")
+	response, err := tsc.RawCommand("getjson", string(sk.Path), "--base64")
 	if err != nil {
 		return
 	}
@@ -774,7 +774,7 @@ func (tsc *tsClient) SetKeyJson(sk StoreKey, jsonData any) (replaced bool, addre
 		return
 	}
 
-	response, err := tsc.apiCall("setjson", string(sk.Path), string(marshalled))
+	response, err := tsc.RawCommand("setjson", string(sk.Path), string(marshalled))
 	if err != nil {
 		return
 	}
@@ -788,7 +788,7 @@ func (tsc *tsClient) SetKeyJson(sk StoreKey, jsonData any) (replaced bool, addre
 }
 
 func (tsc *tsClient) SetKeyJsonBase64(sk StoreKey, b64 string) (replaced bool, address StoreAddress, err error) {
-	response, err := tsc.apiCall("setjson", string(sk.Path), b64, "--base64")
+	response, err := tsc.RawCommand("setjson", string(sk.Path), b64, "--base64")
 	if err != nil {
 		return
 	}
@@ -807,7 +807,7 @@ func (tsc *tsClient) CreateKeyJson(sk StoreKey, jsonData any) (created bool, add
 		return
 	}
 
-	response, err := tsc.apiCall("createjson", string(sk.Path), string(marshalled))
+	response, err := tsc.RawCommand("createjson", string(sk.Path), string(marshalled))
 	if err != nil {
 		return
 	}
@@ -821,7 +821,7 @@ func (tsc *tsClient) CreateKeyJson(sk StoreKey, jsonData any) (created bool, add
 }
 
 func (tsc *tsClient) CreateKeyJsonBase64(sk StoreKey, b64 string) (created bool, address StoreAddress, err error) {
-	response, err := tsc.apiCall("createjson", string(sk.Path), b64, "--base64")
+	response, err := tsc.RawCommand("createjson", string(sk.Path), b64, "--base64")
 	if err != nil {
 		return
 	}
@@ -840,7 +840,7 @@ func (tsc *tsClient) ReplaceKeyJson(sk StoreKey, jsonData any) (replaced bool, a
 		return
 	}
 
-	response, err := tsc.apiCall("replacejson", string(sk.Path), string(marshalled))
+	response, err := tsc.RawCommand("replacejson", string(sk.Path), string(marshalled))
 	if err != nil {
 		return
 	}
@@ -854,7 +854,7 @@ func (tsc *tsClient) ReplaceKeyJson(sk StoreKey, jsonData any) (replaced bool, a
 }
 
 func (tsc *tsClient) ReplaceKeyJsonBase64(sk StoreKey, b64 string) (replaced bool, address StoreAddress, err error) {
-	response, err := tsc.apiCall("replacejson", string(sk.Path), b64, "--base64")
+	response, err := tsc.RawCommand("replacejson", string(sk.Path), b64, "--base64")
 	if err != nil {
 		return
 	}
@@ -873,7 +873,7 @@ func (tsc *tsClient) MergeKeyJson(sk StoreKey, jsonData any) (address StoreAddre
 		return
 	}
 
-	response, err := tsc.apiCall("mergejson", string(sk.Path), string(marshalled))
+	response, err := tsc.RawCommand("mergejson", string(sk.Path), string(marshalled))
 	if err != nil {
 		return
 	}
@@ -886,7 +886,7 @@ func (tsc *tsClient) MergeKeyJson(sk StoreKey, jsonData any) (address StoreAddre
 }
 
 func (tsc *tsClient) MergeKeyJsonBase64(sk StoreKey, b64 string) (address StoreAddress, err error) {
-	response, err := tsc.apiCall("mergejson", string(sk.Path), b64, "--base64")
+	response, err := tsc.RawCommand("mergejson", string(sk.Path), b64, "--base64")
 	if err != nil {
 		return
 	}
@@ -899,7 +899,7 @@ func (tsc *tsClient) MergeKeyJsonBase64(sk StoreKey, b64 string) (address StoreA
 }
 
 func (tsc *tsClient) CalculateKeyValue(sk StoreKey, expression string) (address StoreAddress, newValue any, err error) {
-	response, err := tsc.apiCall("calc", string(sk.Path), expression)
+	response, err := tsc.RawCommand("calc", string(sk.Path), expression)
 	if err != nil {
 		return
 	}
