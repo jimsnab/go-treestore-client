@@ -1296,3 +1296,82 @@ func TestCalculateKeyValue(t *testing.T) {
 		t.Error("value verify")
 	}
 }
+
+func TestMoveKey(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	ssk := MakeStoreKey("source")
+	dsk := MakeStoreKey("dest")
+
+	tick := fmt.Sprintf("%d", time.Now().UnixNano())
+	_, _, err := tsc.SetKeyValue(ssk, tick)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	exists, moved, err := tsc.MoveKey(ssk, dsk, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !exists || !moved {
+		t.Error("should have moved")
+	}
+
+	value, ke, vs, err := tsc.GetKeyValue(dsk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ke || !vs || value != tick {
+		t.Error("value verify")
+	}
+}
+
+func TestMoveKeyOverwrite(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	ssk := MakeStoreKey("source")
+	dsk := MakeStoreKey("dest")
+
+	tick := fmt.Sprintf("%d", time.Now().UnixNano())
+	_, _, err := tsc.SetKeyValue(ssk, tick)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, _, err = tsc.SetKeyValue(dsk, 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	exists, moved, err := tsc.MoveKey(ssk, dsk, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !exists || moved {
+		t.Error("should not have moved")
+	}
+
+	value, ke, vs, err := tsc.GetKeyValue(dsk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ke || !vs || value != 100 {
+		t.Error("value verify")
+	}
+
+	exists, moved, err = tsc.MoveKey(ssk, dsk, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !exists || !moved {
+		t.Error("should have moved")
+	}
+
+	value, ke, vs, err = tsc.GetKeyValue(dsk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ke || !vs || value != tick {
+		t.Error("value verify")
+	}
+}
