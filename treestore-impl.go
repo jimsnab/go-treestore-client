@@ -841,8 +841,13 @@ func (tsc *tsClient) ImportBase64(sk StoreKey, b64 string) (err error) {
 // Retrieves the child key tree and leaf values in the form of json. If
 // metdata "array" is "true" then the child key nodes are treated as
 // array indicies. (They must be big endian uint32.)
-func (tsc *tsClient) GetKeyAsJson(sk StoreKey) (jsonData any, err error) {
-	response, err := tsc.RawCommand("getjson", string(sk.Path))
+func (tsc *tsClient) GetKeyAsJson(sk StoreKey, opt JsonOptions) (jsonData any, err error) {
+	args := []string{"getjson", string(sk.Path)}
+	if (opt & JsonStringValuesAsKeys) != 0 {
+		args = append(args, "--straskey")
+	}
+
+	response, err := tsc.RawCommand(args...)
 	if err != nil {
 		return
 	}
@@ -857,8 +862,13 @@ func (tsc *tsClient) GetKeyAsJson(sk StoreKey) (jsonData any, err error) {
 //
 // This variant provides the data in raw bytes, typically for an
 // application to call json.Unmarshal on its own struct type.
-func (tsc *tsClient) GetKeyAsJsonBytes(sk StoreKey) (bytes []byte, err error) {
-	response, err := tsc.RawCommand("getjson", string(sk.Path), "--base64")
+func (tsc *tsClient) GetKeyAsJsonBytes(sk StoreKey, opt JsonOptions) (bytes []byte, err error) {
+	args := []string{"getjson", string(sk.Path), "--base64"}
+	if (opt & JsonStringValuesAsKeys) != 0 {
+		args = append(args, "--straskey")
+	}
+
+	response, err := tsc.RawCommand(args...)
 	if err != nil {
 		return
 	}
@@ -878,8 +888,13 @@ func (tsc *tsClient) GetKeyAsJsonBytes(sk StoreKey) (bytes []byte, err error) {
 // array indicies. (They must be big endian uint32.)
 //
 // This variant provides the json data in a base64 encoded string.
-func (tsc *tsClient) GetKeyAsJsonBase64(sk StoreKey) (b64 string, err error) {
-	response, err := tsc.RawCommand("getjson", string(sk.Path), "--base64")
+func (tsc *tsClient) GetKeyAsJsonBase64(sk StoreKey, opt JsonOptions) (b64 string, err error) {
+	args := []string{"getjson", string(sk.Path), "--base64"}
+	if (opt & JsonStringValuesAsKeys) != 0 {
+		args = append(args, "--straskey")
+	}
+
+	response, err := tsc.RawCommand(args...)
 	if err != nil {
 		return
 	}
@@ -891,13 +906,18 @@ func (tsc *tsClient) GetKeyAsJsonBase64(sk StoreKey) (b64 string, err error) {
 // Takes the generalized json data and stores it at the specified key path.
 // If the sk exists, its value, children and history are deleted, and the new
 // json data takes its place.
-func (tsc *tsClient) SetKeyJson(sk StoreKey, jsonData any) (replaced bool, address StoreAddress, err error) {
+func (tsc *tsClient) SetKeyJson(sk StoreKey, jsonData any, opt JsonOptions) (replaced bool, address StoreAddress, err error) {
 	marshalled, err := json.Marshal(jsonData)
 	if err != nil {
 		return
 	}
 
-	response, err := tsc.RawCommand("setjson", string(sk.Path), string(marshalled))
+	args := []string{"setjson", string(sk.Path), string(marshalled)}
+	if (opt & JsonStringValuesAsKeys) != 0 {
+		args = append(args, "--straskey")
+	}
+
+	response, err := tsc.RawCommand(args...)
 	if err != nil {
 		return
 	}
@@ -915,8 +935,13 @@ func (tsc *tsClient) SetKeyJson(sk StoreKey, jsonData any) (replaced bool, addre
 // json data takes its place.
 //
 // This variant accepts the json data in a base64 encoded string.
-func (tsc *tsClient) SetKeyJsonBase64(sk StoreKey, b64 string) (replaced bool, address StoreAddress, err error) {
-	response, err := tsc.RawCommand("setjson", string(sk.Path), b64, "--base64")
+func (tsc *tsClient) SetKeyJsonBase64(sk StoreKey, b64 string, opt JsonOptions) (replaced bool, address StoreAddress, err error) {
+	args := []string{"setjson", string(sk.Path), b64, "--base64"}
+	if (opt & JsonStringValuesAsKeys) != 0 {
+		args = append(args, "--straskey")
+	}
+
+	response, err := tsc.RawCommand(args...)
 	if err != nil {
 		return
 	}
@@ -932,13 +957,18 @@ func (tsc *tsClient) SetKeyJsonBase64(sk StoreKey, b64 string) (replaced bool, a
 // Takes the generalized json data and stores it at the specified key path.
 // If the sk exists, no changes are made. Otherwise a new key node is created
 // with its child data set according to the json structure.
-func (tsc *tsClient) CreateKeyJson(sk StoreKey, jsonData any) (created bool, address StoreAddress, err error) {
+func (tsc *tsClient) CreateKeyJson(sk StoreKey, jsonData any, opt JsonOptions) (created bool, address StoreAddress, err error) {
 	marshalled, err := json.Marshal(jsonData)
 	if err != nil {
 		return
 	}
 
-	response, err := tsc.RawCommand("createjson", string(sk.Path), string(marshalled))
+	args := []string{"createjson", string(sk.Path), string(marshalled)}
+	if (opt & JsonStringValuesAsKeys) != 0 {
+		args = append(args, "--straskey")
+	}
+
+	response, err := tsc.RawCommand(args...)
 	if err != nil {
 		return
 	}
@@ -956,8 +986,13 @@ func (tsc *tsClient) CreateKeyJson(sk StoreKey, jsonData any) (created bool, add
 // with its child data set according to the json structure.
 //
 // This variant accepts the json data in a base64 encoded string.
-func (tsc *tsClient) CreateKeyJsonBase64(sk StoreKey, b64 string) (created bool, address StoreAddress, err error) {
-	response, err := tsc.RawCommand("createjson", string(sk.Path), b64, "--base64")
+func (tsc *tsClient) CreateKeyJsonBase64(sk StoreKey, b64 string, opt JsonOptions) (created bool, address StoreAddress, err error) {
+	args := []string{"createjson", string(sk.Path), b64, "--base64"}
+	if (opt & JsonStringValuesAsKeys) != 0 {
+		args = append(args, "--straskey")
+	}
+
+	response, err := tsc.RawCommand(args...)
 	if err != nil {
 		return
 	}
@@ -973,13 +1008,18 @@ func (tsc *tsClient) CreateKeyJsonBase64(sk StoreKey, b64 string) (created bool,
 // Takes the generalized json data and stores it at the specified key path.
 // If the sk doesn't exists, no changes are made. Otherwise the key node's
 // value and children are deleted, and the new json data takes its place.
-func (tsc *tsClient) ReplaceKeyJson(sk StoreKey, jsonData any) (replaced bool, address StoreAddress, err error) {
+func (tsc *tsClient) ReplaceKeyJson(sk StoreKey, jsonData any, opt JsonOptions) (replaced bool, address StoreAddress, err error) {
 	marshalled, err := json.Marshal(jsonData)
 	if err != nil {
 		return
 	}
 
-	response, err := tsc.RawCommand("replacejson", string(sk.Path), string(marshalled))
+	args := []string{"replacejson", string(sk.Path), string(marshalled)}
+	if (opt & JsonStringValuesAsKeys) != 0 {
+		args = append(args, "--straskey")
+	}
+
+	response, err := tsc.RawCommand(args...)
 	if err != nil {
 		return
 	}
@@ -997,8 +1037,13 @@ func (tsc *tsClient) ReplaceKeyJson(sk StoreKey, jsonData any) (replaced bool, a
 // value and children are deleted, and the new json data takes its place.
 //
 // This variant accepts the json data in a base64 encoded string.
-func (tsc *tsClient) ReplaceKeyJsonBase64(sk StoreKey, b64 string) (replaced bool, address StoreAddress, err error) {
-	response, err := tsc.RawCommand("replacejson", string(sk.Path), b64, "--base64")
+func (tsc *tsClient) ReplaceKeyJsonBase64(sk StoreKey, b64 string, opt JsonOptions) (replaced bool, address StoreAddress, err error) {
+	args := []string{"replacejson", string(sk.Path), b64, "--base64"}
+	if (opt & JsonStringValuesAsKeys) != 0 {
+		args = append(args, "--straskey")
+	}
+
+	response, err := tsc.RawCommand(args...)
 	if err != nil {
 		return
 	}
@@ -1014,13 +1059,18 @@ func (tsc *tsClient) ReplaceKeyJsonBase64(sk StoreKey, b64 string) (replaced boo
 // Overlays json data on top of existing data. This is one of the slower APIs
 // because each part of json is independently written to the store, and a
 // write lock is required across the whole operation.
-func (tsc *tsClient) MergeKeyJson(sk StoreKey, jsonData any) (address StoreAddress, err error) {
+func (tsc *tsClient) MergeKeyJson(sk StoreKey, jsonData any, opt JsonOptions) (address StoreAddress, err error) {
 	marshalled, err := json.Marshal(jsonData)
 	if err != nil {
 		return
 	}
 
-	response, err := tsc.RawCommand("mergejson", string(sk.Path), string(marshalled))
+	args := []string{"mergejson", string(sk.Path), string(marshalled)}
+	if (opt & JsonStringValuesAsKeys) != 0 {
+		args = append(args, "--straskey")
+	}
+
+	response, err := tsc.RawCommand(args...)
 	if err != nil {
 		return
 	}
@@ -1037,8 +1087,13 @@ func (tsc *tsClient) MergeKeyJson(sk StoreKey, jsonData any) (address StoreAddre
 // write lock is required across the whole operation.
 //
 // This variant accepts the json data in a base64 encoded string.
-func (tsc *tsClient) MergeKeyJsonBase64(sk StoreKey, b64 string) (address StoreAddress, err error) {
-	response, err := tsc.RawCommand("mergejson", string(sk.Path), b64, "--base64")
+func (tsc *tsClient) MergeKeyJsonBase64(sk StoreKey, b64 string, opt JsonOptions) (address StoreAddress, err error) {
+	args := []string{"mergejson", string(sk.Path), b64, "--base64"}
+	if (opt & JsonStringValuesAsKeys) != 0 {
+		args = append(args, "--straskey")
+	}
+
+	response, err := tsc.RawCommand(args...)
 	if err != nil {
 		return
 	}

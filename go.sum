@@ -167,6 +167,10 @@ github.com/jimsnab/go-treestore v0.0.0-20230815211702-481902770a6b h1:j49eDNSMEY
 github.com/jimsnab/go-treestore v0.0.0-20230815211702-481902770a6b/go.mod h1:FK1nd2VKfR+5KDjQczZTxETVl5gQF6MtRMhECBh/Tuk=
 github.com/jimsnab/go-treestore v0.0.0-20230912202938-3174246176e6 h1:rDCKea5w3jxNQ8C+M4STz0HywsVTordESL6bHA9GibM=
 github.com/jimsnab/go-treestore v0.0.0-20230912202938-3174246176e6/go.mod h1:FK1nd2VKfR+5KDjQczZTxETVl5gQF6MtRMhECBh/Tuk=
+github.com/jimsnab/go-treestore v0.0.0-20230918170903-7cb0327c9f8a h1:k6pqx+JlRC5bJzRThsjda1ydUddzK8aQlhO+oSg/jaQ=
+github.com/jimsnab/go-treestore v0.0.0-20230918170903-7cb0327c9f8a/go.mod h1:FK1nd2VKfR+5KDjQczZTxETVl5gQF6MtRMhECBh/Tuk=
+github.com/jimsnab/go-treestore v0.0.0-20230918174025-7f8fb9d35857 h1:Iz6DYJL/LN8uBre3zNbcYj5v/OsF6wfH5xdiWnX9lUY=
+github.com/jimsnab/go-treestore v0.0.0-20230918174025-7f8fb9d35857/go.mod h1:FK1nd2VKfR+5KDjQczZTxETVl5gQF6MtRMhECBh/Tuk=
 github.com/jimsnab/go-treestore-cmdline v0.0.0-20230804173703-fd7e3a45f8ed h1:eSo4P/fYpylzhK4tYaJhygjwbsVUCHJKth3qFld1mgI=
 github.com/jimsnab/go-treestore-cmdline v0.0.0-20230804173703-fd7e3a45f8ed/go.mod h1:C4QZuPBbO7zk7/O+9/T2bEJfaj+LzmQrcv7ZdFD86s0=
 github.com/jimsnab/go-treestore-cmdline v0.0.0-20230804174526-f61fd45d4055 h1:w3jLiISXRDM3MKKbn4jFujcDmGSUljtlo4olCR0Mgdw=
@@ -225,6 +229,8 @@ github.com/jimsnab/go-treestore-cmdline v0.0.0-20230815211944-bc9269485491 h1:Py
 github.com/jimsnab/go-treestore-cmdline v0.0.0-20230815211944-bc9269485491/go.mod h1:IDwpFuigjRnZeh56nsg+hymP87l3Ymdmg3BEwxNzu60=
 github.com/jimsnab/go-treestore-cmdline v0.0.0-20230912203139-b184cc4e4452 h1:NDtsokUgQ1+0kmmkvjWcKmMbfZeDD1wx8a3HRh61kPU=
 github.com/jimsnab/go-treestore-cmdline v0.0.0-20230912203139-b184cc4e4452/go.mod h1:kC5NB5OAXX2Ev5MifM8+1tm2TroN/JdnvTUCUjNmTSc=
+github.com/jimsnab/go-treestore-cmdline v0.0.0-20230918171212-6d4234d6cfe8 h1:tV4OjQUYKsXxPhp2V+yDum1okZEJwjaHIgxc1MJiyr4=
+github.com/jimsnab/go-treestore-cmdline v0.0.0-20230918171212-6d4234d6cfe8/go.mod h1:6Xo3PclJEGU6P8QdzJPkfMwAlX/wXGUK/17QVOJ1Gwg=
 github.com/jstemmer/go-junit-report v0.0.0-20190106144839-af01ea7f8024/go.mod h1:6v2b51hI/fHJwM22ozAgKL4VKDeJcHhJFhtBdhmNjmU=
 github.com/jstemmer/go-junit-report v0.9.1/go.mod h1:Brl9GWCQeLvo8nXZwPNNblvFj/XSXhF0NWZEnDohbsk=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=

@@ -936,12 +936,38 @@ func TestJsonSet(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	replaced, addr, err := tsc.SetKeyJson(sk, jsonData)
+	replaced, addr, err := tsc.SetKeyJson(sk, jsonData, 0)
 	if replaced || addr == 0 || err != nil {
 		t.Error("set json")
 	}
 
-	data, err := tsc.GetKeyAsJson(sk)
+	data, err := tsc.GetKeyAsJson(sk, 0)
+	if data == nil || err != nil {
+		t.Error("get json")
+	}
+
+	doesJsonMatch(t, "set", jsonData, data)
+}
+
+func TestJsonSetStrAsKey(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	sk := MakeStoreKey("test")
+
+	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
+
+	var jsonData any
+	err := json.Unmarshal(jsonText, &jsonData)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	replaced, addr, err := tsc.SetKeyJson(sk, jsonData, JsonStringValuesAsKeys)
+	if replaced || addr == 0 || err != nil {
+		t.Error("set json")
+	}
+
+	data, err := tsc.GetKeyAsJson(sk, JsonStringValuesAsKeys)
 	if data == nil || err != nil {
 		t.Error("get json")
 	}
@@ -957,12 +983,45 @@ func TestJsonSetBytes(t *testing.T) {
 	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
 	jsonDataB64 := base64.StdEncoding.EncodeToString(jsonText)
 
-	replaced, addr, err := tsc.SetKeyJsonBase64(sk, jsonDataB64)
+	replaced, addr, err := tsc.SetKeyJsonBase64(sk, jsonDataB64, 0)
 	if replaced || addr == 0 || err != nil {
 		t.Error("set json")
 	}
 
-	data, err := tsc.GetKeyAsJsonBytes(sk)
+	data, err := tsc.GetKeyAsJsonBytes(sk, 0)
+	if err != nil {
+		t.Error("get json")
+	}
+
+	var m map[string]any
+	err = json.Unmarshal(data, &m)
+	if err != nil {
+		t.Error("unmarshal")
+	}
+
+	var jsonData map[string]any
+	err = json.Unmarshal(jsonText, &jsonData)
+	if err != nil {
+		t.Fatal("test data unmarshal")
+	}
+
+	doesJsonMatch(t, "set", jsonData, m)
+}
+
+func TestJsonSetBytesStrAsKey(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	sk := MakeStoreKey("test")
+
+	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
+	jsonDataB64 := base64.StdEncoding.EncodeToString(jsonText)
+
+	replaced, addr, err := tsc.SetKeyJsonBase64(sk, jsonDataB64, JsonStringValuesAsKeys)
+	if replaced || addr == 0 || err != nil {
+		t.Error("set json")
+	}
+
+	data, err := tsc.GetKeyAsJsonBytes(sk, JsonStringValuesAsKeys)
 	if err != nil {
 		t.Error("get json")
 	}
@@ -987,7 +1046,7 @@ func TestJsonGetMissing(t *testing.T) {
 
 	sk := MakeStoreKey("test")
 
-	data, err := tsc.GetKeyAsJson(sk)
+	data, err := tsc.GetKeyAsJson(sk, 0)
 	if err != nil {
 		t.Error("get json")
 	}
@@ -1002,7 +1061,7 @@ func TestJsonGetBytesMissing(t *testing.T) {
 
 	sk := MakeStoreKey("test")
 
-	data, err := tsc.GetKeyAsJsonBytes(sk)
+	data, err := tsc.GetKeyAsJsonBytes(sk, 0)
 	if err != nil {
 		t.Error("get json")
 	}
@@ -1028,12 +1087,31 @@ func TestJsonSetBase64(t *testing.T) {
 	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
 	jsonDataB64 := base64.StdEncoding.EncodeToString(jsonText)
 
-	replaced, addr, err := tsc.SetKeyJsonBase64(sk, jsonDataB64)
+	replaced, addr, err := tsc.SetKeyJsonBase64(sk, jsonDataB64, 0)
 	if replaced || addr == 0 || err != nil {
 		t.Error("set json")
 	}
 
-	data, err := tsc.GetKeyAsJsonBase64(sk)
+	data, err := tsc.GetKeyAsJsonBase64(sk, 0)
+	if data != "eyJhbmltYWxzIjp7ImNhdCI6eyJzb3VuZCI6Im1lb3cifSwiZG9nIjp7ImJyZWVkcyI6MzYwLCJzb3VuZCI6ImJhcmsifX19" || err != nil {
+		t.Error("get json")
+	}
+}
+
+func TestJsonSetBase64StrAsKey(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	sk := MakeStoreKey("test")
+
+	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
+	jsonDataB64 := base64.StdEncoding.EncodeToString(jsonText)
+
+	replaced, addr, err := tsc.SetKeyJsonBase64(sk, jsonDataB64, JsonStringValuesAsKeys)
+	if replaced || addr == 0 || err != nil {
+		t.Error("set json")
+	}
+
+	data, err := tsc.GetKeyAsJsonBase64(sk, JsonStringValuesAsKeys)
 	if data != "eyJhbmltYWxzIjp7ImNhdCI6eyJzb3VuZCI6Im1lb3cifSwiZG9nIjp7ImJyZWVkcyI6MzYwLCJzb3VuZCI6ImJhcmsifX19" || err != nil {
 		t.Error("get json")
 	}
@@ -1052,19 +1130,50 @@ func TestJsonCreate(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	created, addr, err := tsc.CreateKeyJson(sk, jsonData)
+	created, addr, err := tsc.CreateKeyJson(sk, jsonData, 0)
 	if !created || addr == 0 || err != nil {
 		t.Error("create json")
 	}
 
-	data, err := tsc.GetKeyAsJson(sk)
+	data, err := tsc.GetKeyAsJson(sk, 0)
 	if data == nil || err != nil {
 		t.Error("get json")
 	}
 
 	doesJsonMatch(t, "create", jsonData, data)
 
-	created, addr, err = tsc.CreateKeyJson(sk, jsonData)
+	created, addr, err = tsc.CreateKeyJson(sk, jsonData, 0)
+	if created || addr != 0 || err != nil {
+		t.Error("create json 2")
+	}
+}
+
+func TestJsonCreateStrAsKey(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	sk := MakeStoreKey("test")
+
+	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
+
+	var jsonData any
+	err := json.Unmarshal(jsonText, &jsonData)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	created, addr, err := tsc.CreateKeyJson(sk, jsonData, JsonStringValuesAsKeys)
+	if !created || addr == 0 || err != nil {
+		t.Error("create json")
+	}
+
+	data, err := tsc.GetKeyAsJson(sk, JsonStringValuesAsKeys)
+	if data == nil || err != nil {
+		t.Error("get json")
+	}
+
+	doesJsonMatch(t, "create", jsonData, data)
+
+	created, addr, err = tsc.CreateKeyJson(sk, jsonData, JsonStringValuesAsKeys)
 	if created || addr != 0 || err != nil {
 		t.Error("create json 2")
 	}
@@ -1078,17 +1187,41 @@ func TestJsonCreateB64(t *testing.T) {
 	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
 	jsonDataB64 := base64.StdEncoding.EncodeToString(jsonText)
 
-	created, addr, err := tsc.CreateKeyJsonBase64(sk, jsonDataB64)
+	created, addr, err := tsc.CreateKeyJsonBase64(sk, jsonDataB64, 0)
 	if !created || addr == 0 || err != nil {
 		t.Error("create json")
 	}
 
-	data, err := tsc.GetKeyAsJsonBase64(sk)
+	data, err := tsc.GetKeyAsJsonBase64(sk, 0)
 	if data != "eyJhbmltYWxzIjp7ImNhdCI6eyJzb3VuZCI6Im1lb3cifSwiZG9nIjp7ImJyZWVkcyI6MzYwLCJzb3VuZCI6ImJhcmsifX19" || err != nil {
 		t.Error("get json")
 	}
 
-	created, addr, err = tsc.CreateKeyJsonBase64(sk, jsonDataB64)
+	created, addr, err = tsc.CreateKeyJsonBase64(sk, jsonDataB64, 0)
+	if created || addr != 0 || err != nil {
+		t.Error("create json 2")
+	}
+}
+
+func TestJsonCreateB64StrAsKey(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	sk := MakeStoreKey("test")
+
+	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
+	jsonDataB64 := base64.StdEncoding.EncodeToString(jsonText)
+
+	created, addr, err := tsc.CreateKeyJsonBase64(sk, jsonDataB64, JsonStringValuesAsKeys)
+	if !created || addr == 0 || err != nil {
+		t.Error("create json")
+	}
+
+	data, err := tsc.GetKeyAsJsonBase64(sk, JsonStringValuesAsKeys)
+	if data != "eyJhbmltYWxzIjp7ImNhdCI6eyJzb3VuZCI6Im1lb3cifSwiZG9nIjp7ImJyZWVkcyI6MzYwLCJzb3VuZCI6ImJhcmsifX19" || err != nil {
+		t.Error("get json")
+	}
+
+	created, addr, err = tsc.CreateKeyJsonBase64(sk, jsonDataB64, JsonStringValuesAsKeys)
 	if created || addr != 0 || err != nil {
 		t.Error("create json 2")
 	}
@@ -1107,24 +1240,24 @@ func TestJsonReplace(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	replaced, addr, err := tsc.ReplaceKeyJson(sk, jsonData)
+	replaced, addr, err := tsc.ReplaceKeyJson(sk, jsonData, 0)
 	if replaced || addr != 0 || err != nil {
 		t.Error("replace json 1")
 	}
 
-	created, addr, err := tsc.CreateKeyJson(sk, jsonData)
+	created, addr, err := tsc.CreateKeyJson(sk, jsonData, 0)
 	if !created || addr == 0 || err != nil {
 		t.Error("create json")
 	}
 
-	data, err := tsc.GetKeyAsJson(sk)
+	data, err := tsc.GetKeyAsJson(sk, 0)
 	if data == nil || err != nil {
 		t.Error("get json")
 	}
 
 	doesJsonMatch(t, "replace 1", jsonData, data)
 
-	replaced, addr, err = tsc.ReplaceKeyJson(sk, jsonData)
+	replaced, addr, err = tsc.ReplaceKeyJson(sk, jsonData, 0)
 	if !replaced || addr == 0 || err != nil {
 		t.Error("replace json 2")
 	}
@@ -1136,12 +1269,67 @@ func TestJsonReplace(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	replaced, addr, err = tsc.ReplaceKeyJson(sk, jsonData)
+	replaced, addr, err = tsc.ReplaceKeyJson(sk, jsonData, 0)
 	if !replaced || addr == 0 || err != nil {
 		t.Error("replace json 2")
 	}
 
-	data, err = tsc.GetKeyAsJson(sk)
+	data, err = tsc.GetKeyAsJson(sk, 0)
+	if data == nil || err != nil {
+		t.Error("get json 2")
+	}
+
+	doesJsonMatch(t, "replace 2", jsonData, data)
+}
+
+func TestJsonReplaceStrAsKey(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	sk := MakeStoreKey("test")
+
+	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
+
+	var jsonData any
+	err := json.Unmarshal(jsonText, &jsonData)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	replaced, addr, err := tsc.ReplaceKeyJson(sk, jsonData, JsonStringValuesAsKeys)
+	if replaced || addr != 0 || err != nil {
+		t.Error("replace json 1")
+	}
+
+	created, addr, err := tsc.CreateKeyJson(sk, jsonData, JsonStringValuesAsKeys)
+	if !created || addr == 0 || err != nil {
+		t.Error("create json")
+	}
+
+	data, err := tsc.GetKeyAsJson(sk, JsonStringValuesAsKeys)
+	if data == nil || err != nil {
+		t.Error("get json")
+	}
+
+	doesJsonMatch(t, "replace 1", jsonData, data)
+
+	replaced, addr, err = tsc.ReplaceKeyJson(sk, jsonData, JsonStringValuesAsKeys)
+	if !replaced || addr == 0 || err != nil {
+		t.Error("replace json 2")
+	}
+
+	jsonText = []byte(`{"animals": {"fox": {"sound": "howl"}}}`)
+
+	err = json.Unmarshal(jsonText, &jsonData)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	replaced, addr, err = tsc.ReplaceKeyJson(sk, jsonData, JsonStringValuesAsKeys)
+	if !replaced || addr == 0 || err != nil {
+		t.Error("replace json 2")
+	}
+
+	data, err = tsc.GetKeyAsJson(sk, JsonStringValuesAsKeys)
 	if data == nil || err != nil {
 		t.Error("get json 2")
 	}
@@ -1157,22 +1345,22 @@ func TestJsonReplaceBase64(t *testing.T) {
 	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
 	jsonDataB64 := base64.StdEncoding.EncodeToString(jsonText)
 
-	replaced, addr, err := tsc.ReplaceKeyJsonBase64(sk, jsonDataB64)
+	replaced, addr, err := tsc.ReplaceKeyJsonBase64(sk, jsonDataB64, 0)
 	if replaced || addr != 0 || err != nil {
 		t.Error("replace json 1")
 	}
 
-	created, addr, err := tsc.CreateKeyJsonBase64(sk, jsonDataB64)
+	created, addr, err := tsc.CreateKeyJsonBase64(sk, jsonDataB64, 0)
 	if !created || addr == 0 || err != nil {
 		t.Error("create json")
 	}
 
-	data, err := tsc.GetKeyAsJsonBase64(sk)
+	data, err := tsc.GetKeyAsJsonBase64(sk, 0)
 	if data != "eyJhbmltYWxzIjp7ImNhdCI6eyJzb3VuZCI6Im1lb3cifSwiZG9nIjp7ImJyZWVkcyI6MzYwLCJzb3VuZCI6ImJhcmsifX19" || err != nil {
 		t.Error("get json")
 	}
 
-	replaced, addr, err = tsc.ReplaceKeyJson(sk, jsonDataB64)
+	replaced, addr, err = tsc.ReplaceKeyJson(sk, jsonDataB64, 0)
 	if !replaced || addr == 0 || err != nil {
 		t.Error("replace json 2")
 	}
@@ -1180,12 +1368,54 @@ func TestJsonReplaceBase64(t *testing.T) {
 	jsonText = []byte(`{"animals": {"fox": {"sound": "howl"}}}`)
 	jsonDataB64 = base64.StdEncoding.EncodeToString(jsonText)
 
-	replaced, addr, err = tsc.ReplaceKeyJsonBase64(sk, jsonDataB64)
+	replaced, addr, err = tsc.ReplaceKeyJsonBase64(sk, jsonDataB64, 0)
 	if !replaced || addr == 0 || err != nil {
 		t.Error("replace json 2")
 	}
 
-	data, err = tsc.GetKeyAsJsonBase64(sk)
+	data, err = tsc.GetKeyAsJsonBase64(sk, 0)
+	if data != "eyJhbmltYWxzIjp7ImZveCI6eyJzb3VuZCI6Imhvd2wifX19" || err != nil {
+		t.Error("get json 2")
+	}
+}
+
+func TestJsonReplaceBase64StrAsKey(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	sk := MakeStoreKey("test")
+
+	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
+	jsonDataB64 := base64.StdEncoding.EncodeToString(jsonText)
+
+	replaced, addr, err := tsc.ReplaceKeyJsonBase64(sk, jsonDataB64, JsonStringValuesAsKeys)
+	if replaced || addr != 0 || err != nil {
+		t.Error("replace json 1")
+	}
+
+	created, addr, err := tsc.CreateKeyJsonBase64(sk, jsonDataB64, JsonStringValuesAsKeys)
+	if !created || addr == 0 || err != nil {
+		t.Error("create json")
+	}
+
+	data, err := tsc.GetKeyAsJsonBase64(sk, JsonStringValuesAsKeys)
+	if data != "eyJhbmltYWxzIjp7ImNhdCI6eyJzb3VuZCI6Im1lb3cifSwiZG9nIjp7ImJyZWVkcyI6MzYwLCJzb3VuZCI6ImJhcmsifX19" || err != nil {
+		t.Error("get json")
+	}
+
+	replaced, addr, err = tsc.ReplaceKeyJson(sk, jsonDataB64, JsonStringValuesAsKeys)
+	if !replaced || addr == 0 || err != nil {
+		t.Error("replace json 2")
+	}
+
+	jsonText = []byte(`{"animals": {"fox": {"sound": "howl"}}}`)
+	jsonDataB64 = base64.StdEncoding.EncodeToString(jsonText)
+
+	replaced, addr, err = tsc.ReplaceKeyJsonBase64(sk, jsonDataB64, JsonStringValuesAsKeys)
+	if !replaced || addr == 0 || err != nil {
+		t.Error("replace json 2")
+	}
+
+	data, err = tsc.GetKeyAsJsonBase64(sk, JsonStringValuesAsKeys)
 	if data != "eyJhbmltYWxzIjp7ImZveCI6eyJzb3VuZCI6Imhvd2wifX19" || err != nil {
 		t.Error("get json 2")
 	}
@@ -1204,7 +1434,7 @@ func TestJsonMerge(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	addr, err := tsc.MergeKeyJson(sk, jsonData)
+	addr, err := tsc.MergeKeyJson(sk, jsonData, 0)
 	if err != nil {
 		t.Error("merge 1")
 	}
@@ -1219,7 +1449,7 @@ func TestJsonMerge(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	addr, err = tsc.MergeKeyJson(sk, jsonData)
+	addr, err = tsc.MergeKeyJson(sk, jsonData, 0)
 	if err != nil {
 		t.Error("merge 2")
 	}
@@ -1227,7 +1457,58 @@ func TestJsonMerge(t *testing.T) {
 		t.Error("addr 0")
 	}
 
-	data, err := tsc.GetKeyAsJson(sk)
+	data, err := tsc.GetKeyAsJson(sk, 0)
+	if data == nil || err != nil {
+		t.Error("get json 2")
+	}
+
+	jsonText = []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}, "fox": {"sound": "howl"}}}`)
+
+	err = json.Unmarshal(jsonText, &jsonData)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	doesJsonMatch(t, "merge", jsonData, data)
+}
+
+func TestJsonMergeStrAsKey(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	sk := MakeStoreKey("test")
+
+	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
+
+	var jsonData any
+	err := json.Unmarshal(jsonText, &jsonData)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	addr, err := tsc.MergeKeyJson(sk, jsonData, JsonStringValuesAsKeys)
+	if err != nil {
+		t.Error("merge 1")
+	}
+	if addr == 0 {
+		t.Error("addr 0")
+	}
+
+	jsonText = []byte(`{"animals": {"fox": {"sound": "howl"}}}`)
+
+	err = json.Unmarshal(jsonText, &jsonData)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	addr, err = tsc.MergeKeyJson(sk, jsonData, JsonStringValuesAsKeys)
+	if err != nil {
+		t.Error("merge 2")
+	}
+	if addr == 0 {
+		t.Error("addr 0")
+	}
+
+	data, err := tsc.GetKeyAsJson(sk, JsonStringValuesAsKeys)
 	if data == nil || err != nil {
 		t.Error("get json 2")
 	}
@@ -1250,7 +1531,7 @@ func TestJsonMergeBase64(t *testing.T) {
 	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
 	jsonDataB64 := base64.StdEncoding.EncodeToString(jsonText)
 
-	addr, err := tsc.MergeKeyJsonBase64(sk, jsonDataB64)
+	addr, err := tsc.MergeKeyJsonBase64(sk, jsonDataB64, 0)
 	if err != nil {
 		t.Error("merge 1")
 	}
@@ -1261,7 +1542,7 @@ func TestJsonMergeBase64(t *testing.T) {
 	jsonText = []byte(`{"animals": {"fox": {"sound": "howl"}}}`)
 	jsonDataB64 = base64.StdEncoding.EncodeToString(jsonText)
 
-	addr, err = tsc.MergeKeyJsonBase64(sk, jsonDataB64)
+	addr, err = tsc.MergeKeyJsonBase64(sk, jsonDataB64, 0)
 	if err != nil {
 		t.Error("merge 2")
 	}
@@ -1269,7 +1550,40 @@ func TestJsonMergeBase64(t *testing.T) {
 		t.Error("addr 0")
 	}
 
-	data, err := tsc.GetKeyAsJsonBase64(sk)
+	data, err := tsc.GetKeyAsJsonBase64(sk, 0)
+	if data != "eyJhbmltYWxzIjp7ImNhdCI6eyJzb3VuZCI6Im1lb3cifSwiZG9nIjp7ImJyZWVkcyI6MzYwLCJzb3VuZCI6ImJhcmsifSwiZm94Ijp7InNvdW5kIjoiaG93bCJ9fX0=" || err != nil {
+		t.Error("get json 2")
+	}
+}
+
+func TestJsonMergeBase64StrAsKey(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	sk := MakeStoreKey("test")
+
+	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
+	jsonDataB64 := base64.StdEncoding.EncodeToString(jsonText)
+
+	addr, err := tsc.MergeKeyJsonBase64(sk, jsonDataB64, JsonStringValuesAsKeys)
+	if err != nil {
+		t.Error("merge 1")
+	}
+	if addr == 0 {
+		t.Error("addr 0")
+	}
+
+	jsonText = []byte(`{"animals": {"fox": {"sound": "howl"}}}`)
+	jsonDataB64 = base64.StdEncoding.EncodeToString(jsonText)
+
+	addr, err = tsc.MergeKeyJsonBase64(sk, jsonDataB64, JsonStringValuesAsKeys)
+	if err != nil {
+		t.Error("merge 2")
+	}
+	if addr == 0 {
+		t.Error("addr 0")
+	}
+
+	data, err := tsc.GetKeyAsJsonBase64(sk, JsonStringValuesAsKeys)
 	if data != "eyJhbmltYWxzIjp7ImNhdCI6eyJzb3VuZCI6Im1lb3cifSwiZG9nIjp7ImJyZWVkcyI6MzYwLCJzb3VuZCI6ImJhcmsifSwiZm94Ijp7InNvdW5kIjoiaG93bCJ9fX0=" || err != nil {
 		t.Error("get json 2")
 	}

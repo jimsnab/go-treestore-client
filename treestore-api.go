@@ -38,6 +38,8 @@ type (
 		Relationships []StoreAddress
 	}
 
+	JsonOptions treestore.JsonOptions
+
 	TSClient interface {
 		// Closes the connection to the TreeStore server, if one is open.
 		Close() error
@@ -206,7 +208,7 @@ type (
 		// array indicies. (They must be big endian uint32.)
 		//
 		// If the key does not exist, jsonData will be null.
-		GetKeyAsJson(sk StoreKey) (jsonData any, err error)
+		GetKeyAsJson(sk StoreKey, opt JsonOptions) (jsonData any, err error)
 
 		// Retrieves the child key tree and leaf values in the form of json. If
 		// metdata "array" is "true" then the child key nodes are treated as
@@ -216,54 +218,54 @@ type (
 		// a specific struct.
 		//
 		// If the key does not exist, jsonData will be the string "null".
-		GetKeyAsJsonBytes(sk StoreKey) (jsonData []byte, err error)
+		GetKeyAsJsonBytes(sk StoreKey, opt JsonOptions) (jsonData []byte, err error)
 
 		// Retrieves the child key tree and leaf values in the form of json. If
 		// metdata "array" is "true" then the child key nodes are treated as
 		// array indicies. (They must be big endian uint32.)
 		//
 		// If the key does not exist, b64 will be base64 encoding of the string "null".
-		GetKeyAsJsonBase64(sk StoreKey) (b64 string, err error)
+		GetKeyAsJsonBase64(sk StoreKey, opt JsonOptions) (b64 string, err error)
 
 		// Takes the generalized json data and stores it at the specified key path.
 		// If the sk exists, its value, children and history are deleted, and the new
 		// json data takes its place.
-		SetKeyJson(sk StoreKey, jsonData any) (replaced bool, address StoreAddress, err error)
+		SetKeyJson(sk StoreKey, jsonData any, opt JsonOptions) (replaced bool, address StoreAddress, err error)
 
 		// Takes the generalized json data and stores it at the specified key path.
 		// If the sk exists, its value, children and history are deleted, and the new
 		// json data takes its place.
-		SetKeyJsonBase64(sk StoreKey, b64 string) (replaced bool, address StoreAddress, err error)
+		SetKeyJsonBase64(sk StoreKey, b64 string, opt JsonOptions) (replaced bool, address StoreAddress, err error)
 
 		// Takes the generalized json data and stores it at the specified key path.
 		// If the sk exists, no changes are made. Otherwise a new key node is created
 		// with its child data set according to the json structure.
-		CreateKeyJson(sk StoreKey, jsonData any) (created bool, address StoreAddress, err error)
+		CreateKeyJson(sk StoreKey, jsonData any, opt JsonOptions) (created bool, address StoreAddress, err error)
 
 		// Takes the generalized json data and stores it at the specified key path.
 		// If the sk exists, no changes are made. Otherwise a new key node is created
 		// with its child data set according to the json structure.
-		CreateKeyJsonBase64(sk StoreKey, b64 string) (created bool, address StoreAddress, err error)
+		CreateKeyJsonBase64(sk StoreKey, b64 string, opt JsonOptions) (created bool, address StoreAddress, err error)
 
 		// Takes the generalized json data and stores it at the specified key path.
 		// If the sk doesn't exists, no changes are made. Otherwise the key node's
 		// value and children are deleted, and the new json data takes its place.
-		ReplaceKeyJson(sk StoreKey, jsonData any) (replaced bool, address StoreAddress, err error)
+		ReplaceKeyJson(sk StoreKey, jsonData any, opt JsonOptions) (replaced bool, address StoreAddress, err error)
 
 		// Takes the generalized json data and stores it at the specified key path.
 		// If the sk doesn't exists, no changes are made. Otherwise the key node's
 		// value and children are deleted, and the new json data takes its place.
-		ReplaceKeyJsonBase64(sk StoreKey, b64 string) (replaced bool, address StoreAddress, err error)
+		ReplaceKeyJsonBase64(sk StoreKey, b64 string, opt JsonOptions) (replaced bool, address StoreAddress, err error)
 
 		// Overlays json data on top of existing data. This is one of the slower APIs
 		// because each part of json is independently written to the store, and a
 		// write lock is required across the whole operation.
-		MergeKeyJson(sk StoreKey, jsonData any) (address StoreAddress, err error)
+		MergeKeyJson(sk StoreKey, jsonData any, opt JsonOptions) (address StoreAddress, err error)
 
 		// Overlays json data on top of existing data. This is one of the slower APIs
 		// because each part of json is independently written to the store, and a
 		// write lock is required across the whole operation.
-		MergeKeyJsonBase64(sk StoreKey, b64 string) (address StoreAddress, err error)
+		MergeKeyJsonBase64(sk StoreKey, b64 string, opt JsonOptions) (address StoreAddress, err error)
 
 		// Evaluate a math expression and store the result.
 		//
@@ -321,4 +323,8 @@ const (
 	SetExMustExist SetExFlags = 1 << iota
 	SetExMustNotExist
 	SetExNoValueUpdate
+)
+
+const (
+	JsonStringValuesAsKeys JsonOptions = 1 << iota
 )
