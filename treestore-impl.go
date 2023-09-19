@@ -1198,16 +1198,20 @@ func (tsc *tsClient) MoveKey(srcSk StoreKey, destSk StoreKey, overwrite bool) (e
 // reference keys as well.
 //
 // If ttl == 0, expiration is cleared. If ttl > 0, it is the Unix nanosecond
-// tick of key expiration. Specify -1 for ttl to retain the source key's expiration.
+// tick of key expiration. Specify nil for ttl to retain the source key's expiration.
 //
 // N.B., the address of a child source node does not change when the parent
 // key is moved. Also expiration is not altered for child keys.
+//
+// The caller can specify keys to unreference upon the move. This supports
+// the scenario where an index key is moving also. The old index key is
+// specified in unrefs, and the new index key is specified in refs.
 //
 // This move operation can be used to make a temporary key permanent, with
 // overwrite false for create, or true for update. It can also be used for
 // delete by making source and destination the same and specifying an already
 // expired ttl.
-func (tsc *tsClient) MoveReferencedKey(srcSk StoreKey, destSk StoreKey, overwrite bool, ttl *time.Time, refs []StoreKey) (exists, moved bool, err error) {
+func (tsc *tsClient) MoveReferencedKey(srcSk StoreKey, destSk StoreKey, overwrite bool, ttl *time.Time, refs []StoreKey, unrefs []StoreKey) (exists, moved bool, err error) {
 	args := []string{"mvref", string(srcSk.Path), string(destSk.Path)}
 	if overwrite {
 		args = append(args, "--overwrite")
@@ -1217,6 +1221,9 @@ func (tsc *tsClient) MoveReferencedKey(srcSk StoreKey, destSk StoreKey, overwrit
 	}
 	for _, ref := range refs {
 		args = append(args, "--ref", string(ref.Path))
+	}
+	for _, unref := range unrefs {
+		args = append(args, "--unref", string(unref.Path))
 	}
 
 	response, err := tsc.RawCommand(args...)

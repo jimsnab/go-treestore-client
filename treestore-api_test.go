@@ -1704,7 +1704,7 @@ func TestMoveReferencedKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	exists, moved, err := tsc.MoveReferencedKey(ssk, dsk, false, nil, []StoreKey{rsk1, rsk2})
+	exists, moved, err := tsc.MoveReferencedKey(ssk, dsk, false, nil, []StoreKey{rsk1, rsk2}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1743,6 +1743,31 @@ func TestMoveReferencedKey(t *testing.T) {
 	if rv.CurrentValue != tick {
 		t.Error("ref value verify 2")
 	}
+
+	// move back to src and remove reference keys
+	exists, moved, err = tsc.MoveReferencedKey(dsk, ssk, false, nil, nil, []StoreKey{rsk1, rsk2})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !exists || !moved {
+		t.Error("should have moved")
+	}
+
+	hasLink, rv, err = tsc.GetRelationshipValue(rsk1, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hasLink || rv != nil {
+		t.Error("follow unref relationship 1")
+	}
+
+	hasLink, rv, err = tsc.GetRelationshipValue(rsk2, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hasLink || rv != nil {
+		t.Error("follow unref relationship 2")
+	}
 }
 
 func TestMoveReferencedKeyTtl(t *testing.T) {
@@ -1760,7 +1785,7 @@ func TestMoveReferencedKeyTtl(t *testing.T) {
 
 	expire := time.Now().Add(time.Minute)
 
-	exists, moved, err := tsc.MoveReferencedKey(ssk, dsk, false, &expire, []StoreKey{rsk})
+	exists, moved, err := tsc.MoveReferencedKey(ssk, dsk, false, &expire, []StoreKey{rsk}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1817,7 +1842,7 @@ func TestMoveReferencedKey3(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	exists, moved, err := tsc.MoveReferencedKey(ssk, dsk, false, nil, nil)
+	exists, moved, err := tsc.MoveReferencedKey(ssk, dsk, false, nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

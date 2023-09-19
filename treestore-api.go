@@ -334,11 +334,15 @@ type (
 		// N.B., the address of a child source node does not change when the parent
 		// key is moved. Also expiration is not altered for child keys.
 		//
+		// The caller can specify keys to unreference upon the move. This supports
+		// the scenario where an index key is moving also. The old index key is
+		// specified in unrefs, and the new index key is specified in refs.
+		//
 		// This move operation can be used to make a temporary key permanent, with
 		// overwrite false for create, or true for update. It can also be used for
 		// delete by making source and destination the same and specifying an already
 		// expired ttl.
-		MoveReferencedKey(srcSk StoreKey, destSk StoreKey, overwrite bool, ttl *time.Time, refs []StoreKey) (exists, moved bool, err error)
+		MoveReferencedKey(srcSk StoreKey, destSk StoreKey, overwrite bool, ttl *time.Time, refs []StoreKey, unrefs []StoreKey) (exists, moved bool, err error)
 
 		// Calls the treestore sending in value-escaped arguments, and receiving back a map parsed
 		// from the json response.
