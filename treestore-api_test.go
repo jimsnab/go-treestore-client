@@ -589,7 +589,7 @@ func TestMetadata(t *testing.T) {
 		t.Error("attrb update")
 	}
 
-	err = tsc.ClearKeyMetdata(sk)
+	err = tsc.ClearKeyMetadata(sk)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -618,7 +618,7 @@ func TestMetadata(t *testing.T) {
 		t.Error("get after empty set")
 	}
 
-	exists, pv, err = tsc.ClearMetdataAttribute(sk, "empty")
+	exists, pv, err = tsc.ClearMetadataAttribute(sk, "empty")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -626,7 +626,7 @@ func TestMetadata(t *testing.T) {
 		t.Error("clear empty")
 	}
 
-	exists, pv, err = tsc.ClearMetdataAttribute(sk, "empty")
+	exists, pv, err = tsc.ClearMetadataAttribute(sk, "empty")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1682,6 +1682,150 @@ func TestMoveKeyOverwrite(t *testing.T) {
 	}
 
 	value, ke, vs, err = tsc.GetKeyValue(dsk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ke || !vs || value != tick {
+		t.Error("value verify")
+	}
+}
+
+func TestMoveReferencedKey(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	ssk := MakeStoreKey("source")
+	dsk := MakeStoreKey("dest")
+	rsk1 := MakeStoreKey("index1")
+	rsk2 := MakeStoreKey("index2")
+
+	tick := fmt.Sprintf("%d", time.Now().UnixNano())
+	_, _, err := tsc.SetKeyValue(ssk, tick)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	exists, moved, err := tsc.MoveReferencedKey(ssk, dsk, false, nil, []StoreKey{rsk1, rsk2})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !exists || !moved {
+		t.Error("should have moved")
+	}
+
+	value, ke, vs, err := tsc.GetKeyValue(dsk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ke || !vs || value != tick {
+		t.Error("value verify")
+	}
+
+	hasLink, rv, err := tsc.GetRelationshipValue(rsk1, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasLink || rv == nil {
+		t.Error("follow relationship 1")
+	}
+
+	if rv.CurrentValue != tick {
+		t.Error("ref value verify 1")
+	}
+
+	hasLink, rv, err = tsc.GetRelationshipValue(rsk2, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasLink || rv == nil {
+		t.Error("follow relationship 2")
+	}
+
+	if rv.CurrentValue != tick {
+		t.Error("ref value verify 2")
+	}
+}
+
+func TestMoveReferencedKeyTtl(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	ssk := MakeStoreKey("source")
+	dsk := MakeStoreKey("dest")
+	rsk := MakeStoreKey("index")
+
+	tick := fmt.Sprintf("%d", time.Now().UnixNano())
+	_, _, err := tsc.SetKeyValue(ssk, tick)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expire := time.Now().Add(time.Minute)
+
+	exists, moved, err := tsc.MoveReferencedKey(ssk, dsk, false, &expire, []StoreKey{rsk})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !exists || !moved {
+		t.Error("should have moved")
+	}
+
+	value, ke, vs, err := tsc.GetKeyValue(dsk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ke || !vs || value != tick {
+		t.Error("value verify")
+	}
+
+	hasLink, rv, err := tsc.GetRelationshipValue(rsk, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasLink || rv == nil {
+		t.Error("follow relationship")
+	}
+
+	if rv.CurrentValue != tick {
+		t.Error("ref value verify")
+	}
+
+	ttl, err := tsc.GetKeyTtl(dsk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ttl.UnixNano() != expire.UnixNano() {
+		t.Error("dest ttl")
+	}
+
+	ttl, err = tsc.GetKeyTtl(rsk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ttl.UnixNano() != expire.UnixNano() {
+		t.Error("ref ttl")
+	}
+}
+
+func TestMoveReferencedKey3(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	ssk := MakeStoreKey("source")
+	dsk := MakeStoreKey("dest")
+
+	tick := fmt.Sprintf("%d", time.Now().UnixNano())
+	_, _, err := tsc.SetKeyValue(ssk, tick)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	exists, moved, err := tsc.MoveReferencedKey(ssk, dsk, false, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !exists || !moved {
+		t.Error("should have moved")
+	}
+
+	value, ke, vs, err := tsc.GetKeyValue(dsk)
 	if err != nil {
 		t.Fatal(err)
 	}

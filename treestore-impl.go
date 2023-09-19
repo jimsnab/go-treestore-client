@@ -526,7 +526,7 @@ func (tsc *tsClient) SetMetadataAttribute(sk StoreKey, attribute, value string) 
 }
 
 // Removes a single metadata attribute from a key
-func (tsc *tsClient) ClearMetdataAttribute(sk StoreKey, attribute string) (attributeExists bool, originalValue string, err error) {
+func (tsc *tsClient) ClearMetadataAttribute(sk StoreKey, attribute string) (attributeExists bool, originalValue string, err error) {
 	response, err := tsc.RawCommand("delmeta", string(sk.Path), attribute)
 	if err != nil {
 		return
@@ -536,8 +536,8 @@ func (tsc *tsClient) ClearMetdataAttribute(sk StoreKey, attribute string) (attri
 	return
 }
 
-// Discards all metdata on the specific key
-func (tsc *tsClient) ClearKeyMetdata(sk StoreKey) (err error) {
+// Discards all metadata on the specific key
+func (tsc *tsClient) ClearKeyMetadata(sk StoreKey) (err error) {
 	_, err = tsc.RawCommand("resetmeta", string(sk.Path))
 	return
 }
@@ -839,7 +839,7 @@ func (tsc *tsClient) ImportBase64(sk StoreKey, b64 string) (err error) {
 }
 
 // Retrieves the child key tree and leaf values in the form of json. If
-// metdata "array" is "true" then the child key nodes are treated as
+// metadata "array" is "true" then the child key nodes are treated as
 // array indicies. (They must be big endian uint32.)
 func (tsc *tsClient) GetKeyAsJson(sk StoreKey, opt JsonOptions) (jsonData any, err error) {
 	args := []string{"getjson", string(sk.Path)}
@@ -857,7 +857,7 @@ func (tsc *tsClient) GetKeyAsJson(sk StoreKey, opt JsonOptions) (jsonData any, e
 }
 
 // Retrieves the child key tree and leaf values in the form of json. If
-// metdata "array" is "true" then the child key nodes are treated as
+// metadata "array" is "true" then the child key nodes are treated as
 // array indicies. (They must be big endian uint32.)
 //
 // This variant provides the data in raw bytes, typically for an
@@ -884,7 +884,7 @@ func (tsc *tsClient) GetKeyAsJsonBytes(sk StoreKey, opt JsonOptions) (bytes []by
 }
 
 // Retrieves the child key tree and leaf values in the form of json. If
-// metdata "array" is "true" then the child key nodes are treated as
+// metadata "array" is "true" then the child key nodes are treated as
 // array indicies. (They must be big endian uint32.)
 //
 // This variant provides the json data in a base64 encoded string.
@@ -1172,6 +1172,53 @@ func (tsc *tsClient) MoveKey(srcSk StoreKey, destSk StoreKey, overwrite bool) (e
 	if overwrite {
 		args = append(args, "--overwrite")
 	}
+	response, err := tsc.RawCommand(args...)
+	if err != nil {
+		return
+	}
+
+	exists, _ = response["exists"].(bool)
+	moved, _ = response["moved"].(bool)
+	return
+}
+
+// This API is intended for an indexing scenario, where:
+//
+//   - A "source key" is staged with a temporary path, and with a short expiration
+//   - The children of the source key are filled, usually with multiple steps
+//   - When the source key is ready, it is moved to a "destination key" (its
+//     permanent path), and the expiration is removed or set to a longer expiration.
+//   - At the time of moving source to destination, separate "index keys" are
+//     maintained atomically with a reference to the destination key.
+//
+// If the reference keys do not exist, they are created, and the destination
+// address is placed in relationship index 0.
+//
+// If a ttl change is specified, it is applied to the destination key and the
+// reference keys as well.
+//
+// If ttl == 0, expiration is cleared. If ttl > 0, it is the Unix nanosecond
+// tick of key expiration. Specify -1 for ttl to retain the source key's expiration.
+//
+// N.B., the address of a child source node does not change when the parent
+// key is moved. Also expiration is not altered for child keys.
+//
+// This move operation can be used to make a temporary key permanent, with
+// overwrite false for create, or true for update. It can also be used for
+// delete by making source and destination the same and specifying an already
+// expired ttl.
+func (tsc *tsClient) MoveReferencedKey(srcSk StoreKey, destSk StoreKey, overwrite bool, ttl *time.Time, refs []StoreKey) (exists, moved bool, err error) {
+	args := []string{"mvref", string(srcSk.Path), string(destSk.Path)}
+	if overwrite {
+		args = append(args, "--overwrite")
+	}
+	if ttl != nil {
+		args = append(args, "--ns", fmt.Sprintf("%d", ttl.UnixNano()))
+	}
+	for _, ref := range refs {
+		args = append(args, "--ref", string(ref.Path))
+	}
+
 	response, err := tsc.RawCommand(args...)
 	if err != nil {
 		return
