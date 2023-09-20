@@ -52,6 +52,14 @@ type (
 		// key already exists. The key index is not altered.
 		SetKey(sk StoreKey) (address StoreAddress, exists bool, err error)
 
+		// If the test key exists, set a key without a value and without an expiration,
+		// doing nothing if the test key does not exist or if the key already exists.
+		// The key index is not altered.
+		//
+		// If the test key does not exist, address will be returned as 0.
+		// The return value 'exists' is true if the target sk exists.
+		SetKeyIfExists(testSk, sk StoreKey) (address StoreAddress, exists bool, err error)
+
 		// Set a key with a value, without an expiration, adding to value history if the
 		// key already exists.
 		SetKeyValue(sk StoreKey, value any) (address StoreAddress, firstValue bool, err error)

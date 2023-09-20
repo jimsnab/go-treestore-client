@@ -54,6 +54,40 @@ func TestSetGetK(t *testing.T) {
 	}
 }
 
+func TestSetGetKIfExists(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	sk := MakeStoreKey("client", "test", "key")
+	testSk := MakeStoreKey("other")
+
+	addr, exists, err := tsc.SetKeyIfExists(testSk, sk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if addr != 0 || exists {
+		t.Error("test key missing")
+	}
+
+	tsc.SetKey(testSk)
+
+	addr, exists, err = tsc.SetKeyIfExists(testSk, sk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if addr != 5 || exists {
+		t.Error("initial key")
+	}
+
+	verifyAddr, located, err := tsc.LocateKey(sk)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if verifyAddr != addr || !located {
+		t.Error("verify")
+	}
+}
+
 func TestSetGetV(t *testing.T) {
 	_, tsc := testSetup(t)
 

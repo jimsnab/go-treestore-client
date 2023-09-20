@@ -213,6 +213,23 @@ func (tsc *tsClient) SetKey(sk StoreKey) (address StoreAddress, exists bool, err
 	return
 }
 
+// If the test key exists, set a key without a value and without an expiration,
+// doing nothing if the test key does not exist or if the key already exists.
+// The key index is not altered.
+//
+// If the test key does not exist, address will be returned as 0.
+// The return value 'exists' is true if the target sk exists.
+func (tsc *tsClient) SetKeyIfExists(testSk, sk StoreKey) (address StoreAddress, exists bool, err error) {
+	response, err := tsc.RawCommand("setkif", string(testSk.Path), string(sk.Path))
+	if err != nil {
+		return
+	}
+
+	address = responseAddress(response["address"])
+	exists = responseBool(response["exists"])
+	return
+}
+
 // Set a key with a value, without an expiration, adding to value history if the
 // key already exists.
 func (tsc *tsClient) SetKeyValue(sk StoreKey, value any) (address StoreAddress, firstValue bool, err error) {
