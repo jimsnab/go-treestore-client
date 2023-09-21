@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/jimsnab/go-lane"
+	"github.com/jimsnab/go-treestore"
 	tscmdsrv "github.com/jimsnab/go-treestore-cmdline"
 )
 
@@ -1073,6 +1074,138 @@ func TestJsonSetBytesStrAsKey(t *testing.T) {
 	}
 
 	doesJsonMatch(t, "set", jsonData, m)
+}
+
+func TestJsonStage(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	stagingSk := MakeStoreKey("staging")
+
+	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
+
+	var jsonData any
+	err := json.Unmarshal(jsonText, &jsonData)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	tempSk, addr, err := tsc.StageKeyJson(stagingSk, jsonData, 0)
+	expectedKey := fmt.Sprintf("%s/%d", stagingSk.Path, addr)
+	if tempSk.Path != treestore.TokenPath(expectedKey) || err != nil {
+		t.Error("stage json")
+	}
+
+	data, err := tsc.GetKeyAsJson(tempSk, 0)
+	if data == nil || err != nil {
+		t.Error("get staged json")
+	}
+
+	doesJsonMatch(t, "staged", jsonData, data)
+}
+
+func TestJsonStageStrAsKey(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	stagingSk := MakeStoreKey("test")
+
+	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
+
+	var jsonData any
+	err := json.Unmarshal(jsonText, &jsonData)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	tempSk, addr, err := tsc.StageKeyJson(stagingSk, jsonData, JsonStringValuesAsKeys)
+	expectedKey := fmt.Sprintf("%s/%d", stagingSk.Path, addr)
+	if tempSk.Path != treestore.TokenPath(expectedKey) || err != nil {
+		t.Error("stage json")
+	}
+
+	ttl, err := tsc.GetKeyTtl(AppendStoreKeySegmentStrings(tempSk, "animals", "cat", "sound", "meow"))
+	if ttl == nil || ttl.UnixNano() != 0 || err != nil {
+		t.Error("verify string is key")
+	}
+
+	data, err := tsc.GetKeyAsJson(tempSk, JsonStringValuesAsKeys)
+	if data == nil || err != nil {
+		t.Error("get staged json")
+	}
+
+	doesJsonMatch(t, "staged", jsonData, data)
+}
+
+func TestJsonStageBytes(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	stagingSk := MakeStoreKey("test")
+
+	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
+	jsonDataB64 := base64.StdEncoding.EncodeToString(jsonText)
+
+	tempSk, addr, err := tsc.StageKeyJsonBase64(stagingSk, jsonDataB64, 0)
+	expectedKey := fmt.Sprintf("%s/%d", stagingSk.Path, addr)
+	if tempSk.Path != treestore.TokenPath(expectedKey) || err != nil {
+		t.Error("stage json")
+	}
+
+	data, err := tsc.GetKeyAsJsonBytes(tempSk, 0)
+	if data == nil || err != nil {
+		t.Error("get staged json")
+	}
+
+	var m map[string]any
+	err = json.Unmarshal(data, &m)
+	if err != nil {
+		t.Error("unmarshal")
+	}
+
+	var jsonData map[string]any
+	err = json.Unmarshal(jsonText, &jsonData)
+	if err != nil {
+		t.Fatal("test data unmarshal")
+	}
+
+	doesJsonMatch(t, "staging", jsonData, m)
+}
+
+func TestJsonStageBytesStrAsKey(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	stagingSk := MakeStoreKey("test")
+
+	jsonText := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
+	jsonDataB64 := base64.StdEncoding.EncodeToString(jsonText)
+
+	tempSk, addr, err := tsc.StageKeyJsonBase64(stagingSk, jsonDataB64, JsonStringValuesAsKeys)
+	expectedKey := fmt.Sprintf("%s/%d", stagingSk.Path, addr)
+	if tempSk.Path != treestore.TokenPath(expectedKey) || err != nil {
+		t.Error("stage json")
+	}
+
+	ttl, err := tsc.GetKeyTtl(AppendStoreKeySegmentStrings(tempSk, "animals", "cat", "sound", "meow"))
+	if ttl == nil || ttl.UnixNano() != 0 || err != nil {
+		t.Error("verify string is key")
+	}
+
+	data, err := tsc.GetKeyAsJsonBytes(tempSk, JsonStringValuesAsKeys)
+	if data == nil || err != nil {
+		t.Error("get staged json")
+	}
+
+	var m map[string]any
+	err = json.Unmarshal(data, &m)
+	if err != nil {
+		t.Error("unmarshal")
+	}
+
+	var jsonData map[string]any
+	err = json.Unmarshal(jsonText, &jsonData)
+	if err != nil {
+		t.Fatal("test data unmarshal")
+	}
+
+	doesJsonMatch(t, "staging", jsonData, m)
 }
 
 func TestJsonGetMissing(t *testing.T) {

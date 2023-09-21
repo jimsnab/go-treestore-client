@@ -971,6 +971,65 @@ func (tsc *tsClient) SetKeyJsonBase64(sk StoreKey, b64 string, opt JsonOptions) 
 	return
 }
 
+// Saves a json object under a temporary name. A one minute expiration is set.
+// This is used in the case where the caller has multiple operations to perform
+// to stage data, and then atomically commits it with MoveKey or MoveReferencedKey.
+// If the caller happens to abort, the staged data expires.
+//
+// The caller provides a staging key, and the json data is stored under a subkey
+// with a unique identifier.
+func (tsc *tsClient) StageKeyJson(stagingSk StoreKey, jsonData any, opts JsonOptions) (tempSk StoreKey, address StoreAddress, err error) {
+	marshalled, err := json.Marshal(jsonData)
+	if err != nil {
+		return
+	}
+
+	args := []string{"stagejson", string(stagingSk.Path), string(marshalled)}
+	if (opts & JsonStringValuesAsKeys) != 0 {
+		args = append(args, "--straskey")
+	}
+
+	response, err := tsc.RawCommand(args...)
+	if err != nil {
+		return
+	}
+
+	tempSk = MakeStoreKeyFromPath(TokenPath(response["tempkey"].(string)))
+	addrStr, exists := response["address"].(float64)
+	if exists {
+		address = responseAddress(addrStr)
+	}
+	return
+}
+
+// Saves a json object under a temporary name. A one minute expiration is set.
+// This is used in the case where the caller has multiple operations to perform
+// to stage data, and then atomically commits it with MoveKey or MoveReferencedKey.
+// If the caller happens to abort, the staged data expires.
+//
+// The caller provides a staging key, and the json data is stored under a subkey
+// with a unique identifier.
+//
+// This variant accepts the json data in a base64 encoded string.
+func (tsc *tsClient) StageKeyJsonBase64(stagingSk StoreKey, b64 string, opts JsonOptions) (tempSk StoreKey, address StoreAddress, err error) {
+	args := []string{"stagejson", string(stagingSk.Path), b64, "--base64"}
+	if (opts & JsonStringValuesAsKeys) != 0 {
+		args = append(args, "--straskey")
+	}
+
+	response, err := tsc.RawCommand(args...)
+	if err != nil {
+		return
+	}
+
+	tempSk = MakeStoreKeyFromPath(TokenPath(response["tempkey"].(string)))
+	addrStr, exists := response["address"].(float64)
+	if exists {
+		address = responseAddress(addrStr)
+	}
+	return
+}
+
 // Takes the generalized json data and stores it at the specified key path.
 // If the sk exists, no changes are made. Otherwise a new key node is created
 // with its child data set according to the json structure.

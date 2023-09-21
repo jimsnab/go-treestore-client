@@ -319,7 +319,7 @@ func responseBool(v any) bool {
 
 func responseEpochNs(v any) *time.Time {
 	n, _ := strconv.ParseInt(v.(string), 10, 64)
-	if n == 0 {
+	if n < 0 {
 		return nil
 	}
 

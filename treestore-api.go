@@ -245,6 +245,24 @@ type (
 		// json data takes its place.
 		SetKeyJsonBase64(sk StoreKey, b64 string, opt JsonOptions) (replaced bool, address StoreAddress, err error)
 
+		// Saves a json object under a temporary name. A one minute expiration is set.
+		// This is used in the case where the caller has multiple operations to perform
+		// to stage data, and then atomically commits it with MoveKey or MoveReferencedKey.
+		// If the caller happens to abort, the staged data expires.
+		//
+		// The caller provides a staging key, and the json data is stored under a subkey
+		// with a unique identifier.
+		StageKeyJson(stagingSk StoreKey, jsonData any, opts JsonOptions) (tempSk StoreKey, address StoreAddress, err error)
+
+		// Saves a json object under a temporary name. A one minute expiration is set.
+		// This is used in the case where the caller has multiple operations to perform
+		// to stage data, and then atomically commits it with MoveKey or MoveReferencedKey.
+		// If the caller happens to abort, the staged data expires.
+		//
+		// The caller provides a staging key, and the json data is stored under a subkey
+		// with a unique identifier.
+		StageKeyJsonBase64(stagingSk StoreKey, b64 string, opts JsonOptions) (tempSk StoreKey, address StoreAddress, err error)
+
 		// Takes the generalized json data and stores it at the specified key path.
 		// If the sk exists, no changes are made. Otherwise a new key node is created
 		// with its child data set according to the json structure.
