@@ -372,7 +372,7 @@ func (tsc *tsClient) GetKeyTtl(sk StoreKey) (ttl *time.Time, err error) {
 }
 
 // Navigates to the valueInstance key node and sets the expiration time in Unix nanoseconds.
-// Specify 0 for no expiration.
+// Specify nil for no expiration.
 func (tsc *tsClient) SetKeyTtl(sk StoreKey, expiration *time.Time) (exists bool, err error) {
 	response, err := tsc.RawCommand("expirekns", string(sk.Path), requestEpochNs(expiration))
 	if err != nil {
