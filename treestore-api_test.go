@@ -1997,6 +1997,86 @@ func TestMoveReferencedKeyTtl(t *testing.T) {
 	}
 }
 
+func TestMoveReferencedKeyTtlZero(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	ssk := MakeStoreKey("source")
+	dsk := MakeStoreKey("dest")
+	rsk := MakeStoreKey("index")
+
+	tick := fmt.Sprintf("%d", time.Now().UnixNano())
+	_, _, err := tsc.SetKeyValue(ssk, tick)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expire := ZeroTime
+
+	exists, moved, err := tsc.MoveReferencedKey(ssk, dsk, false, &expire, []StoreKey{rsk}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !exists || !moved {
+		t.Error("should have moved")
+	}
+
+	value, ke, vs, err := tsc.GetKeyValue(dsk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ke || !vs || value != tick {
+		t.Error("should not have expired")
+	}
+
+	hasLink, rv, err := tsc.GetRelationshipValue(rsk, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasLink || rv == nil {
+		t.Error("must have relationship to moved key")
+	}
+}
+
+func TestMoveReferencedKeyTtlExpired(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	ssk := MakeStoreKey("source")
+	dsk := MakeStoreKey("dest")
+	rsk := MakeStoreKey("index")
+
+	tick := fmt.Sprintf("%d", time.Now().UnixNano())
+	_, _, err := tsc.SetKeyValue(ssk, tick)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expire := ExpiredTime
+
+	exists, moved, err := tsc.MoveReferencedKey(ssk, dsk, false, &expire, []StoreKey{rsk}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !exists || !moved {
+		t.Error("should have moved")
+	}
+
+	value, ke, vs, err := tsc.GetKeyValue(dsk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ke || vs || value != nil {
+		t.Error("should have expired")
+	}
+
+	hasLink, rv, err := tsc.GetRelationshipValue(rsk, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hasLink || rv != nil {
+		t.Error("expired relationship should not exist")
+	}
+}
+
 func TestMoveReferencedKey3(t *testing.T) {
 	_, tsc := testSetup(t)
 

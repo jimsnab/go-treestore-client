@@ -185,6 +185,8 @@ github.com/jimsnab/go-treestore v0.0.0-20230921133250-6ebc0efd569f h1:sTHoiZprIN
 github.com/jimsnab/go-treestore v0.0.0-20230921133250-6ebc0efd569f/go.mod h1:uqG3oqAlvIVIUEWe0k2x9TH7Mv1eDJJzLeJNKaaaTDM=
 github.com/jimsnab/go-treestore v0.0.0-20230926200541-65e74e335069 h1:Uhjd/UhF0EvJW+mDGXhTkZ9O3ZEnwnG/rfAqQ2wk/Z0=
 github.com/jimsnab/go-treestore v0.0.0-20230926200541-65e74e335069/go.mod h1:uqG3oqAlvIVIUEWe0k2x9TH7Mv1eDJJzLeJNKaaaTDM=
+github.com/jimsnab/go-treestore v0.0.0-20230928124252-b225668cf0c1 h1:iZzq2UW0mmdrtY9ZfpKLkO8U7E7CBZgCuPvQVcMrdMQ=
+github.com/jimsnab/go-treestore v0.0.0-20230928124252-b225668cf0c1/go.mod h1:uqG3oqAlvIVIUEWe0k2x9TH7Mv1eDJJzLeJNKaaaTDM=
 github.com/jimsnab/go-treestore-cmdline v0.0.0-20230804173703-fd7e3a45f8ed h1:eSo4P/fYpylzhK4tYaJhygjwbsVUCHJKth3qFld1mgI=
 github.com/jimsnab/go-treestore-cmdline v0.0.0-20230804173703-fd7e3a45f8ed/go.mod h1:C4QZuPBbO7zk7/O+9/T2bEJfaj+LzmQrcv7ZdFD86s0=
 github.com/jimsnab/go-treestore-cmdline v0.0.0-20230804174526-f61fd45d4055 h1:w3jLiISXRDM3MKKbn4jFujcDmGSUljtlo4olCR0Mgdw=

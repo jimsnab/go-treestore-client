@@ -28,6 +28,9 @@ type (
 	}
 )
 
+var ZeroTime = time.Time{}
+var ExpiredTime = time.Date(0, 0, 0, 0, 0, 0, 1, time.UTC)
+
 func NewTSClient(l lane.Lane) TSClient {
 	tsc := &tsClient{
 		l:           l,
@@ -262,8 +265,12 @@ func (tsc *tsClient) SetKeyValue(sk StoreKey, value any) (address StoreAddress, 
 //	SetExMustExist - perform only if the key exists
 //	SetExMustNotExist - perform only if the key does not exist
 //
-// For `expireNs`, specify the Unix nanosecond tick of when the key will expire. Specify zero to
-// remove expiration. Specify -1 to retain the current key expiration.
+// If expire is non nil, the Unix nanosecond is taken from the specified time. If
+// the nanosecond <= 0, expiration is removed, otherwise nanosecond > 0 is set
+// as the key expiration time. Specify nil for expire to retain the current key
+// expiration.
+//
+// The ttl constants ZeroTime and ExpiredTime are provided for convenience.
 //
 // `originalValue` will be provided if the key exists and has a value, even if no change is made.
 //
@@ -295,7 +302,16 @@ func (tsc *tsClient) SetKeyValueEx(sk StoreKey, value any, flags SetExFlags, exp
 	}
 
 	if expire != nil {
-		args = append(args, "--ns", fmt.Sprintf("%d", expire.UnixNano()))
+		var ns int64
+		if expire.IsZero() {
+			ns = 0
+		} else {
+			ns = expire.UnixNano()
+			if ns < 1 {
+				ns = 1
+			}
+		}
+		args = append(args, "--ns", fmt.Sprintf("%d", ns))
 	}
 
 	if relationships != nil {
@@ -1273,8 +1289,12 @@ func (tsc *tsClient) MoveKey(srcSk StoreKey, destSk StoreKey, overwrite bool) (e
 // If a ttl change is specified, it is applied to the destination key and the
 // reference keys as well.
 //
-// If ttl == 0, expiration is cleared. If ttl > 0, it is the Unix nanosecond
-// tick of key expiration. Specify nil for ttl to retain the source key's expiration.
+// If ttl is non nil, the Unix nanosecond is taken from the specified time. If
+// the nanosecond <= 0, expiration is cleared, otherwise nanosecond > 0 is set
+// as the key expiration time. Specify nil for ttl to retain the source key's
+// expiration.
+//
+// The ttl constants ZeroTime and ExpiredTime are provided for convenience.
 //
 // N.B., the address of a child source node does not change when the parent
 // key is moved. Also expiration is not altered for child keys.
@@ -1293,7 +1313,16 @@ func (tsc *tsClient) MoveReferencedKey(srcSk StoreKey, destSk StoreKey, overwrit
 		args = append(args, "--overwrite")
 	}
 	if ttl != nil {
-		args = append(args, "--ns", fmt.Sprintf("%d", ttl.UnixNano()))
+		var ns int64
+		if ttl.IsZero() {
+			ns = 0
+		} else {
+			ns = ttl.UnixNano()
+			if ns < 1 {
+				ns = 1
+			}
+		}
+		args = append(args, "--ns", fmt.Sprintf("%d", ns))
 	}
 	for _, ref := range refs {
 		args = append(args, "--ref", string(ref.Path))
