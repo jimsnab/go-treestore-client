@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 
@@ -2103,5 +2104,50 @@ func TestMoveReferencedKey3(t *testing.T) {
 	}
 	if !ke || !vs || value != tick {
 		t.Error("value verify")
+	}
+}
+
+func TestOverlapped(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	count := 200
+	wgs := make([]*sync.WaitGroup, 0, count)
+
+	for i := 0; i < count; i++ {
+		wg := sync.WaitGroup{}
+		wg.Add(1)
+		wgs = append(wgs, &wg)
+
+		go func(n int) {
+			sk := MakeStoreKey("test", fmt.Sprintf("%d", n))
+			addr, _, err := tsc.SetKeyValue(sk, n)
+			if err != nil {
+				t.Error("error", err)
+			}
+
+			val, ke, ve, err := tsc.GetKeyValue(sk)
+			if err != nil {
+				t.Error("error", err)
+			}
+
+			if !ke || !ve || val.(int) != n {
+				t.Error("value mismatch")
+			}
+
+			sk2, exists, err := tsc.KeyFromAddress(addr)
+			if err != nil {
+				t.Error("error", err)
+			}
+
+			if !exists || sk2.Path != sk.Path {
+				t.Error("addr lookup fail")
+			}
+
+			wgs[n].Done()
+		}(i)
+	}
+
+	for i := 0; i < count; i++ {
+		wgs[i].Wait()
 	}
 }

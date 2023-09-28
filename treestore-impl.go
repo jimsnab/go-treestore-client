@@ -25,6 +25,7 @@ type (
 		hostAndPort string
 		inbound     []byte
 		invoked     atomic.Int32
+		fnLock      sync.Mutex
 	}
 )
 
@@ -86,24 +87,18 @@ func (tsc *tsClient) RawCommand(args ...string) (response map[string]any, err er
 	// Ensure connection
 	//
 
-	err = func() (err error) {
-		tsc.Lock()
-		defer tsc.Unlock()
+	tsc.Lock()
+	defer tsc.Unlock()
 
-		if tsc.cxn == nil {
-			var cxn net.Conn
-			cxn, err = net.Dial("tcp", tsc.hostAndPort)
-			if err != nil {
-				tsc.l.Errorf("can't connect to %s: %s", tsc.hostAndPort, err.Error())
-				return
-			}
-
-			tsc.cxn = cxn
+	if tsc.cxn == nil {
+		var cxn net.Conn
+		cxn, err = net.Dial("tcp", tsc.hostAndPort)
+		if err != nil {
+			tsc.l.Errorf("can't connect to %s: %s", tsc.hostAndPort, err.Error())
+			return
 		}
-		return
-	}()
-	if err != nil {
-		return
+
+		tsc.cxn = cxn
 	}
 
 	//
