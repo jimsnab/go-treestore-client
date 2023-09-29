@@ -2151,3 +2151,40 @@ func TestOverlapped(t *testing.T) {
 		wgs[i].Wait()
 	}
 }
+
+func TestPurge(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	sk := MakeStoreKey("client", "test", "key")
+
+	addr, exists, err := tsc.SetKey(sk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if addr != 4 || exists {
+		t.Error("initial key")
+	}
+
+	verifyAddr, located, err := tsc.LocateKey(sk)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if verifyAddr != addr || !located {
+		t.Error("verify")
+	}
+
+	err = tsc.Purge()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	verifyAddr, located, err = tsc.LocateKey(sk)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if verifyAddr != 0 || located {
+		t.Error("verify after purge")
+	}
+}

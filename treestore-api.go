@@ -381,6 +381,9 @@ type (
 		// Calls the treestore sending in value-escaped arguments, and receiving back a map parsed
 		// from the json response.
 		RawCommand(valueEscapedArgs ...string) (response map[string]any, err error)
+
+		// Discards all data, completely resetting the treestore instance.
+		Purge() (err error)
 	}
 )
 

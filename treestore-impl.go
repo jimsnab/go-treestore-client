@@ -1335,3 +1335,9 @@ func (tsc *tsClient) MoveReferencedKey(srcSk StoreKey, destSk StoreKey, overwrit
 	moved, _ = response["moved"].(bool)
 	return
 }
+
+// Discards all data, completely resetting the treestore instance.
+func (tsc *tsClient) Purge() (err error) {
+	_, err = tsc.RawCommand("purge", "--destructive")
+	return
+}
