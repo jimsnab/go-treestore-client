@@ -12,6 +12,7 @@ type (
 	TokenSet          treestore.TokenSet
 	StoreKey          treestore.StoreKey
 	StoreAddress      treestore.StoreAddress
+	RecordSubPath     treestore.RecordSubPath
 	SetExFlags        treestore.SetExFlags
 	RelationshipValue struct {
 		Sk           StoreKey
@@ -384,6 +385,57 @@ type (
 
 		// Discards all data, completely resetting the treestore instance.
 		Purge() (err error)
+
+		// Makes an index definition.
+		//
+		// To use an index, target data must be stored in a specific way:
+		//
+		//			A "record" to be indexed is a key, possibly with child keys. It
+		//			must have a unique ID. (Key values aren't indexable.)
+		//
+		//			The path to a record must be stored as <parent>/<unique id>/<record>,
+		//	     where <record> is typically a key tree of properites.
+		//
+		//			The `dataParentSk` parameter specifies <parent>.
+		//
+		// An index is maintained according to `fields`:
+		//
+		//	      A "field" is a subpath of the record; an empty subpath for the record ID.
+		//
+		//			 The index key is constructed as <index>/<field>/<field>/...
+		//
+		//			 When the record key is created, the corresponding index key is
+		//		     also created, and relationship 0 holds the address of the record.
+		//
+		//			 When the record key is deleted, the corresponding index key is
+		//	      also deleted.
+		//
+		// A typical pattern is to stage key creation in a staging key, and then move
+		// the key under `dataParentSk`. The record becomes atomically indexed upon
+		// that move.
+		//
+		// Using the TreeStore Json APIs works very well with indexes.
+		//
+		// Creating an index acquires an exclusive lock of the database. If the data
+		// parent key does not exist, it will be created. The operation will be nearly
+		// instant if the data parent key has little to no children. A large number of
+		// records will take some time to index.
+		//
+		// Index entries might point to expired keys. It is handy to use GetRelationshipValue
+		// to determine if the index entry is valid, and to get the key's current value.
+		//
+		// If one of the `fields` can contain multiple children, it is important to
+		// include the record ID at the tail, to avoid overlapping index keys (which
+		// result in incorrect indexing).
+		CreateIndex(dataParentSk, indexSk StoreKey, fields []RecordSubPath) (recordKeyExists, indexCreated bool, err error)
+
+		// Removes an index from a store key.
+		//
+		// See CreateIndex for details on treestore indexes.
+		//
+		// An exclusive lock is held during the removal of the index. If the
+		// index is large, the operation may take some time to delete.
+		DeleteIndex(dataParentSk, indexSk StoreKey) (recordKeyExists, indexRemoved bool, err error)
 	}
 )
 

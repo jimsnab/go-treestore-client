@@ -25,7 +25,6 @@ type (
 		hostAndPort string
 		inbound     []byte
 		invoked     atomic.Int32
-		fnLock      sync.Mutex
 	}
 )
 
@@ -1339,5 +1338,79 @@ func (tsc *tsClient) MoveReferencedKey(srcSk StoreKey, destSk StoreKey, overwrit
 // Discards all data, completely resetting the treestore instance.
 func (tsc *tsClient) Purge() (err error) {
 	_, err = tsc.RawCommand("purge", "--destructive")
+	return
+}
+
+// Makes an index definition.
+//
+// To use an index, target data must be stored in a specific way:
+//
+//			A "record" to be indexed is a key, possibly with child keys. It
+//			must have a unique ID. (Key values aren't indexable.)
+//
+//			The path to a record must be stored as <parent>/<unique id>/<record>,
+//	     where <record> is typically a key tree of properites.
+//
+//			The `dataParentSk` parameter specifies <parent>.
+//
+// An index is maintained according to `fields`:
+//
+//	      A "field" is a subpath of the record; an empty subpath for the record ID.
+//
+//			 The index key is constructed as <index>/<field>/<field>/...
+//
+//			 When the record key is created, the corresponding index key is
+//		     also created, and relationship 0 holds the address of the record.
+//
+//			 When the record key is deleted, the corresponding index key is
+//	      also deleted.
+//
+// A typical pattern is to stage key creation in a staging key, and then move
+// the key under `dataParentSk`. The record becomes atomically indexed upon
+// that move.
+//
+// Using the TreeStore Json APIs works very well with indexes.
+//
+// Creating an index acquires an exclusive lock of the database. If the data
+// parent key does not exist, it will be created. The operation will be nearly
+// instant if the data parent key has little to no children. A large number of
+// records will take some time to index.
+//
+// Index entries might point to expired keys. It is handy to use GetRelationshipValue
+// to determine if the index entry is valid, and to get the key's current value.
+//
+// If one of the `fields` can contain multiple children, it is important to
+// include the record ID at the tail, to avoid overlapping index keys (which
+// result in incorrect indexing).
+func (tsc *tsClient) CreateIndex(dataParentSk, indexSk StoreKey, fields []RecordSubPath) (recordKeyExists, indexCreated bool, err error) {
+	args := []string{"createidx", string(dataParentSk.Path), string(indexSk.Path)}
+	for _, field := range fields {
+		args = append(args, "--field", string(TokenSetToTokenPath(TokenSet(field))))
+	}
+
+	response, err := tsc.RawCommand(args...)
+	if err != nil {
+		return
+	}
+
+	recordKeyExists, _ = response["recordKeyExists"].(bool)
+	indexCreated, _ = response["indexCreated"].(bool)
+	return
+}
+
+// Removes an index from a store key.
+//
+// See CreateIndex for details on treestore indexes.
+//
+// An exclusive lock is held during the removal of the index. If the
+// index is large, the operation may take some time to delete.
+func (tsc *tsClient) DeleteIndex(dataParentSk, indexSk StoreKey) (recordKeyExists, indexRemoved bool, err error) {
+	response, err := tsc.RawCommand("deleteidx", string(dataParentSk.Path), string(indexSk.Path))
+	if err != nil {
+		return
+	}
+
+	recordKeyExists, _ = response["recordKeyExists"].(bool)
+	indexRemoved, _ = response["indexRemoved"].(bool)
 	return
 }

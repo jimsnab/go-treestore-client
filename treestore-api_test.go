@@ -2188,3 +2188,71 @@ func TestPurge(t *testing.T) {
 		t.Error("verify after purge")
 	}
 }
+
+func TestCreateIndex(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	dsk := MakeStoreKey("tree1", "source")
+	isk := MakeStoreKey("tree1-index")
+	vsk := MakeStoreKey("tree1", "source", "123")
+
+	re, ic, err := tsc.CreateIndex(dsk, isk, []RecordSubPath{{}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if re || !ic {
+		t.Error("not created")
+	}
+
+	tsc.SetKey(vsk)
+
+	hasLink, rv, err := tsc.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "123"), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasLink || rv == nil || rv.Sk.Path != "/tree1/source/123" {
+		t.Error("link verify")
+	}
+}
+
+func TestDeleteIndex(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	dsk := MakeStoreKey("tree1", "source")
+	isk := MakeStoreKey("tree1-index")
+	vsk := MakeStoreKey("tree1", "source", "123")
+
+	re, ic, err := tsc.CreateIndex(dsk, isk, []RecordSubPath{{}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if re || !ic {
+		t.Error("not created")
+	}
+
+	tsc.SetKey(vsk)
+
+	hasLink, rv, err := tsc.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "123"), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasLink || rv == nil || rv.Sk.Path != "/tree1/source/123" {
+		t.Error("link verify")
+	}
+
+	re, ir, err := tsc.DeleteIndex(dsk, isk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !re || !ir {
+		t.Error("not removed")
+	}
+
+	hasLink, rv, err = tsc.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "123"), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hasLink || rv != nil {
+		t.Error("link verify 2")
+	}
+}
