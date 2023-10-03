@@ -7,39 +7,18 @@ import (
 )
 
 type (
-	TokenSegment      treestore.TokenSegment
-	TokenPath         treestore.TokenPath
-	TokenSet          treestore.TokenSet
-	StoreKey          treestore.StoreKey
-	StoreAddress      treestore.StoreAddress
-	RecordSubPath     treestore.RecordSubPath
-	SetExFlags        treestore.SetExFlags
-	RelationshipValue struct {
-		Sk           StoreKey
-		CurrentValue any
-	}
-	LevelKey struct {
-		Segment     TokenSegment
-		HasValue    bool
-		HasChildren bool
-	}
-	KeyMatch struct {
-		Key           TokenPath
-		Metadata      map[string]string
-		HasValue      bool
-		HasChildren   bool
-		CurrentValue  any
-		Relationships []StoreAddress
-	}
-	KeyValueMatch struct {
-		Key           TokenPath
-		Metadata      map[string]string
-		HasChildren   bool
-		CurrentValue  any
-		Relationships []StoreAddress
-	}
-
-	JsonOptions treestore.JsonOptions
+	TokenSegment      = treestore.TokenSegment
+	TokenPath         = treestore.TokenPath
+	TokenSet          = treestore.TokenSet
+	StoreKey          = treestore.StoreKey
+	StoreAddress      = treestore.StoreAddress
+	RecordSubPath     = treestore.RecordSubPath
+	SetExFlags        = treestore.SetExFlags
+	RelationshipValue = treestore.RelationshipValue
+	LevelKey          = treestore.LevelKey
+	KeyMatch          = treestore.KeyMatch
+	KeyValueMatch     = treestore.KeyValueMatch
+	JsonOptions       = treestore.JsonOptions
 
 	TSClient interface {
 		// Closes the connection to the TreeStore server, if one is open.

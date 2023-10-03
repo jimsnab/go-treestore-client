@@ -35,9 +35,6 @@ func valueEscape(v any) string {
 	case TokenPath:
 		return bytesToEscapedValue([]byte(t))
 
-	case treestore.TokenPath:
-		return bytesToEscapedValue([]byte(t))
-
 	case []byte:
 		return bytesToEscapedValue(t)
 
@@ -327,74 +324,18 @@ func responseEpochNs(v any) *time.Time {
 	return &t
 }
 
-func EscapeTokenString(plainText string) string {
-	return treestore.EscapeTokenString(plainText)
-}
-
-func UnescapeTokenString(tokenText string) string {
-	return treestore.UnescapeTokenString(tokenText)
-}
-
-func MakeTokenPath(parts ...string) TokenPath {
-	return TokenPath(treestore.MakeTokenPath(parts...))
-}
-
-func SplitTokenPath(tokenPath TokenPath) []string {
-	return treestore.SplitTokenPath(treestore.TokenPath(tokenPath))
-}
-
-func TokenSegmentToString(segment TokenSegment) string {
-	return treestore.TokenSegmentToString(treestore.TokenSegment(segment))
-}
-
-func TokenPathToTokenSet(tokenPath TokenPath) TokenSet {
-	return TokenSet(treestore.TokenPathToTokenSet(treestore.TokenPath(tokenPath)))
-}
-
-func TokenSetToTokenPath(tokens TokenSet) TokenPath {
-	return TokenPath(treestore.TokenSetToTokenPath(treestore.TokenSet(tokens)))
-}
-
-func MakeStoreKey(parts ...string) StoreKey {
-	return StoreKey(treestore.MakeStoreKey(parts...))
-}
-
-func MakeStoreKeyFromPath(tokenPath TokenPath) StoreKey {
-	return StoreKey(treestore.MakeStoreKeyFromPath(treestore.TokenPath(tokenPath)))
-}
-
-func MakeStoreKeyFromTokenSegments(segments ...TokenSegment) StoreKey {
-	arg := make([]treestore.TokenSegment, 0, len(segments))
-	for _, seg := range segments {
-		arg = append(arg, treestore.TokenSegment(seg))
-	}
-	return StoreKey(treestore.MakeStoreKeyFromTokenSegments(arg...))
-}
-
-func SplitStoreKey(sk StoreKey) []string {
-	return treestore.SplitStoreKey(treestore.StoreKey(sk))
-}
-
-func AppendStoreKeySegments(baseSk StoreKey, parts ...TokenSegment) StoreKey {
-	segs := make([]treestore.TokenSegment, 0, len(parts))
-	for _, part := range parts {
-		segs = append(segs, treestore.TokenSegment(part))
-	}
-	return StoreKey(treestore.AppendStoreKeySegments(treestore.StoreKey(baseSk), segs...))
-}
-
-func AppendStoreKeySegmentStrings(baseSk StoreKey, parts ...string) StoreKey {
-	return StoreKey(treestore.AppendStoreKeySegmentStrings(treestore.StoreKey(baseSk), parts...))
-}
-
-func MakeRecordSubPath(parts ...string) RecordSubPath {
-	return RecordSubPath(treestore.MakeRecordSubPath(parts...))
-}
-
-func MakeRecordSubPathFromSegments(parts ...TokenSegment) RecordSubPath {
-	segs := make([]treestore.TokenSegment, 0, len(parts))
-	for _, part := range parts {
-		segs = append(segs, treestore.TokenSegment(part))
-	}
-	return RecordSubPath(treestore.MakeRecordSubPathFromSegments(segs...))
-}
+var EscapeTokenString = treestore.EscapeTokenString
+var UnescapeTokenString = treestore.UnescapeTokenString
+var MakeTokenPath = treestore.MakeTokenPath
+var SplitTokenPath = treestore.SplitTokenPath
+var TokenSegmentToString = treestore.TokenSegmentToString
+var TokenPathToTokenSet = treestore.TokenPathToTokenSet
+var TokenSetToTokenPath = treestore.TokenSetToTokenPath
+var MakeStoreKey = treestore.MakeStoreKey
+var MakeStoreKeyFromPath = treestore.MakeStoreKeyFromPath
+var MakeStoreKeyFromTokenSegments = treestore.MakeStoreKeyFromTokenSegments
+var SplitStoreKey = treestore.SplitStoreKey
+var AppendStoreKeySegments = treestore.AppendStoreKeySegments
+var AppendStoreKeySegmentStrings = treestore.AppendStoreKeySegmentStrings
+var MakeRecordSubPath = treestore.MakeRecordSubPath
+var MakeRecordSubPathFromSegments = treestore.MakeRecordSubPathFromSegments
