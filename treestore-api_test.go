@@ -696,7 +696,7 @@ func TestAddrLookup(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if exists || sk.Path != "" || len(sk.Tokens) != 0 {
+	if exists || sk.Path != "" || sk.LeafSegment() != nil {
 		t.Error("no address")
 	}
 
@@ -704,7 +704,7 @@ func TestAddrLookup(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !exists || sk.Path != "" || len(sk.Tokens) != 0 {
+	if !exists || sk.Path != "" || sk.LeafSegment() != nil {
 		t.Error("sentinel address")
 	}
 
