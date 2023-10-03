@@ -1345,25 +1345,31 @@ func (tsc *tsClient) Purge() (err error) {
 //
 // To use an index, target data must be stored in a specific way:
 //
-//			A "record" to be indexed is a key, possibly with child keys. It
-//			must have a unique ID. (Key values aren't indexable.)
+//   - A "record" to be indexed is a key, possibly with child keys. It
+//     must have a unique ID. (Key values aren't indexable.)
 //
-//			The path to a record must be stored as <parent>/<unique id>/<record>,
-//	     where <record> is typically a key tree of properites.
+//   - The path to a record must be stored as <parent>/<unique id>/<record>,
+//     where <record> is typically a key tree of properites.
 //
-//			The `dataParentSk` parameter specifies <parent>.
+//   - The `dataParentSk` parameter specifies
+//     <parent>.
 //
 // An index is maintained according to `fields`:
 //
-//	      A "field" is a subpath of the record; an empty subpath for the record ID.
+//   - "fields" combine to be a subpath of the record; an empty subpath for
+//     the record ID only.
 //
-//			 The index key is constructed as <index>/<field>/<field>/...
+//   - The index key is constructed as
+//     <index>/<field>/<field>/...
 //
-//			 When the record key is created, the corresponding index key is
-//		     also created, and relationship 0 holds the address of the record.
+//   - A <field> can be nil to match all segment keys at a particular level.
+//     One typical use of this is with a JSON array index.
 //
-//			 When the record key is deleted, the corresponding index key is
-//	      also deleted.
+//   - When the record key is created, the corresponding index key is
+//     also created, and relationship 0 holds the address of the record.
+//
+//   - When the record key is deleted, the corresponding index key is
+//     also deleted.
 //
 // A typical pattern is to stage key creation in a staging key, and then move
 // the key under `dataParentSk`. The record becomes atomically indexed upon

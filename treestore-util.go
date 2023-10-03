@@ -386,3 +386,15 @@ func AppendStoreKeySegments(baseSk StoreKey, parts ...TokenSegment) StoreKey {
 func AppendStoreKeySegmentStrings(baseSk StoreKey, parts ...string) StoreKey {
 	return StoreKey(treestore.AppendStoreKeySegmentStrings(treestore.StoreKey(baseSk), parts...))
 }
+
+func MakeRecordSubPath(parts ...string) RecordSubPath {
+	return RecordSubPath(treestore.MakeRecordSubPath(parts...))
+}
+
+func MakeRecordSubPathFromSegments(parts ...TokenSegment) RecordSubPath {
+	segs := make([]treestore.TokenSegment, 0, len(parts))
+	for _, part := range parts {
+		segs = append(segs, treestore.TokenSegment(part))
+	}
+	return RecordSubPath(treestore.MakeRecordSubPathFromSegments(segs...))
+}
