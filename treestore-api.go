@@ -12,13 +12,16 @@ type (
 	TokenSet          = treestore.TokenSet
 	StoreKey          = treestore.StoreKey
 	StoreAddress      = treestore.StoreAddress
-	RecordSubPath     = treestore.RecordSubPath
+	SubPathSegment    = treestore.SubPathSegment
+	EscapedSubPath    = treestore.EscapedSubPath
+	SubPath           = treestore.SubPath
 	SetExFlags        = treestore.SetExFlags
 	RelationshipValue = treestore.RelationshipValue
 	LevelKey          = treestore.LevelKey
 	KeyMatch          = treestore.KeyMatch
 	KeyValueMatch     = treestore.KeyValueMatch
 	JsonOptions       = treestore.JsonOptions
+	IndexDefinition   = treestore.IndexDefinition
 
 	TSClient interface {
 		// Closes the connection to the TreeStore server, if one is open.
@@ -412,7 +415,7 @@ type (
 		// If one of the `fields` can contain multiple children, it is important to
 		// include the record ID at the tail, to avoid overlapping index keys (which
 		// result in incorrect indexing).
-		CreateIndex(dataParentSk, indexSk StoreKey, fields []RecordSubPath) (recordKeyExists, indexCreated bool, err error)
+		CreateIndex(dataParentSk, indexSk StoreKey, fields []SubPath) (recordKeyExists, indexCreated bool, err error)
 
 		// Removes an index from a store key.
 		//
@@ -421,6 +424,9 @@ type (
 		// An exclusive lock is held during the removal of the index. If the
 		// index is large, the operation may take some time to delete.
 		DeleteIndex(dataParentSk, indexSk StoreKey) (recordKeyExists, indexRemoved bool, err error)
+
+		// Returns all indexes defined for the specified data key, or nil if none.
+		GetIndex(dataParentSk StoreKey) (id []IndexDefinition, err error)
 	}
 )
 

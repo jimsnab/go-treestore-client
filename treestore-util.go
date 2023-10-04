@@ -337,5 +337,27 @@ var MakeStoreKeyFromTokenSegments = treestore.MakeStoreKeyFromTokenSegments
 var SplitStoreKey = treestore.SplitStoreKey
 var AppendStoreKeySegments = treestore.AppendStoreKeySegments
 var AppendStoreKeySegmentStrings = treestore.AppendStoreKeySegmentStrings
-var MakeRecordSubPath = treestore.MakeRecordSubPath
-var MakeRecordSubPathFromSegments = treestore.MakeRecordSubPathFromSegments
+
+// low level
+var EscapeSubPathText = treestore.EscapeSubPathText
+var UnescapeSubPathText = treestore.UnescapeSubPathText
+
+// segment args to paths and back
+var EscapeSubPathStrings = treestore.EscapeSubPathStrings
+var SplitSubPath = treestore.SplitSubPath
+
+// segment escaping and unescaping
+var EscapeSubPathSegment = treestore.EscapeSubPathSegment
+var UnescapeSubPathSegment = treestore.UnescapeSubPathSegment
+
+// subpath appending
+var AppendSubPathSegment = treestore.AppendSubPathSegment
+var AppendSubPathSegmentString = treestore.AppendSubPathSegmentString
+
+// full subpath escape and unescape
+var UnescapeSubPath = treestore.UnescapeSubPath
+var EscapeSubPath = treestore.EscapeSubPath
+
+// convenience utils
+var MakeSubPath = treestore.MakeSubPath
+var JoinSubPath = treestore.JoinSubPath

@@ -2196,7 +2196,7 @@ func TestCreateIndex(t *testing.T) {
 	isk := MakeStoreKey("tree1-index")
 	vsk := MakeStoreKey("tree1", "source", "123")
 
-	re, ic, err := tsc.CreateIndex(dsk, isk, []RecordSubPath{{}})
+	re, ic, err := tsc.CreateIndex(dsk, isk, []SubPath{{}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2222,7 +2222,7 @@ func TestDeleteIndex(t *testing.T) {
 	isk := MakeStoreKey("tree1-index")
 	vsk := MakeStoreKey("tree1", "source", "123")
 
-	re, ic, err := tsc.CreateIndex(dsk, isk, []RecordSubPath{{}})
+	re, ic, err := tsc.CreateIndex(dsk, isk, []SubPath{{}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2254,5 +2254,37 @@ func TestDeleteIndex(t *testing.T) {
 	}
 	if hasLink || rv != nil {
 		t.Error("link verify 2")
+	}
+}
+
+func TestGetIndex(t *testing.T) {
+	_, tsc := testSetup(t)
+
+	dsk := MakeStoreKey("tree1", "source")
+	isk := MakeStoreKey("tree1-index")
+
+	re, ic, err := tsc.CreateIndex(dsk, isk, []SubPath{MakeSubPath(`\N`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if re || !ic {
+		t.Error("not created")
+	}
+
+	defs, err := tsc.GetIndex(dsk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(defs) != 1 {
+		t.Error("index expected")
+	}
+
+	if defs[0].IndexSk.Path != isk.Path {
+		t.Error("index key wrong")
+	}
+
+	subpath := defs[0].Fields[0]
+	if len(subpath) != 1 || subpath[0] != nil {
+		t.Error("index field def wrong")
 	}
 }

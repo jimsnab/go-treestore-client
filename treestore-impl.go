@@ -1388,10 +1388,10 @@ func (tsc *tsClient) Purge() (err error) {
 // If one of the `fields` can contain multiple children, it is important to
 // include the record ID at the tail, to avoid overlapping index keys (which
 // result in incorrect indexing).
-func (tsc *tsClient) CreateIndex(dataParentSk, indexSk StoreKey, fields []RecordSubPath) (recordKeyExists, indexCreated bool, err error) {
+func (tsc *tsClient) CreateIndex(dataParentSk, indexSk StoreKey, fields []SubPath) (recordKeyExists, indexCreated bool, err error) {
 	args := []string{"createidx", string(dataParentSk.Path), string(indexSk.Path)}
 	for _, field := range fields {
-		args = append(args, "--field", string(TokenSetToTokenPath(TokenSet(field))))
+		args = append(args, "--field", string(treestore.EscapeSubPath(field)))
 	}
 
 	response, err := tsc.RawCommand(args...)
@@ -1418,5 +1418,40 @@ func (tsc *tsClient) DeleteIndex(dataParentSk, indexSk StoreKey) (recordKeyExist
 
 	recordKeyExists, _ = response["recordKeyExists"].(bool)
 	indexRemoved, _ = response["indexRemoved"].(bool)
+	return
+}
+
+// Returns all indexes defined for the specified data key, or nil if none.
+func (tsc *tsClient) GetIndex(dataParentSk StoreKey) (id []IndexDefinition, err error) {
+	response, err := tsc.RawCommand("getidx", string(dataParentSk.Path))
+	if err != nil {
+		return
+	}
+
+	indexDefs, _ := response["indexDefinitions"].([]any)
+	if len(indexDefs) > 0 {
+		a := make([]IndexDefinition, 0, len(indexDefs))
+		for _, indexDef := range indexDefs {
+			m, _ := indexDef.(map[string]any)
+			if m == nil {
+				continue
+			}
+			indexKey, _ := m["index_key"].(string)
+			fieldPaths, _ := m["field_paths"].([]any)
+			if fieldPaths != nil {
+				def := IndexDefinition{
+					IndexSk: MakeStoreKeyFromPath(treestore.TokenPath(indexKey)),
+					Fields:  make([]treestore.SubPath, 0, len(fieldPaths)),
+				}
+				for _, fp := range fieldPaths {
+					escapedSubPath, _ := fp.(string)
+					def.Fields = append(def.Fields, treestore.UnescapeSubPath(treestore.EscapedSubPath(escapedSubPath)))
+				}
+				a = append(a, def)
+			}
+		}
+
+		id = a
+	}
 	return
 }
