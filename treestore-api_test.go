@@ -20,7 +20,7 @@ func testSetup(t *testing.T) (l lane.Lane, tsc TSClient) {
 	l = lane.NewTestingLane(context.Background())
 	//l = lane.NewLogLaneWithCR(context.Background())
 	srv := tscmdsrv.NewTreeStoreCmdLineServer(l)
-	srv.StartServer("localhost", 6771, "", 100)
+	srv.StartServer("localhost", 6771, "", 100, nil)
 
 	tsc = NewTSClient(l)
 	tsc.SetServer("localhost", 6771)
