@@ -4,15 +4,15 @@ go 1.21
 
 require (
 	github.com/jimsnab/go-lane v1.6.0
-	github.com/jimsnab/go-treestore v0.0.0-20231010215720-fbe42f4fefd9
-	github.com/jimsnab/go-treestore-cmdline v0.0.0-20231010181736-1d42fa84b9ed
+	github.com/jimsnab/go-treestore v0.0.0-20231011131158-755bc5d10bd3
+	github.com/jimsnab/go-treestore-cmdline v0.0.0-20231011131239-86bdb7ee49a8
 )
 
 require (
 	github.com/Knetic/govaluate v3.0.0+incompatible // indirect
 	github.com/djherbis/atime v1.1.0 // indirect
 	github.com/google/uuid v1.3.1 // indirect
-	github.com/jimsnab/go-cmdline v1.3.0 // indirect
+	github.com/jimsnab/go-cmdline v1.4.0 // indirect
 	github.com/jimsnab/go-simpleutils v1.0.14 // indirect
 	github.com/jimsnab/go-toolprinter v1.0.11 // indirect
 	github.com/spf13/afero v1.10.0 // indirect
