@@ -4,8 +4,8 @@ go 1.21
 
 require (
 	github.com/jimsnab/go-lane v1.6.0
-	github.com/jimsnab/go-treestore v0.0.0-20231011223122-3e320723e675
-	github.com/jimsnab/go-treestore-cmdline v0.0.0-20231011223218-c4a6c17376e3
+	github.com/jimsnab/go-treestore v0.0.0-20231012004519-4c6a39b6948d
+	github.com/jimsnab/go-treestore-cmdline v0.0.0-20231012004559-bf97d97385a0
 )
 
 require (

@@ -1091,7 +1091,7 @@ func TestJsonStage(t *testing.T) {
 	}
 
 	tempSk, addr, err := tsc.StageKeyJson(stagingSk, jsonData, 0)
-	expectedKey := fmt.Sprintf("%s/%d", stagingSk.Path, addr)
+	expectedKey := fmt.Sprintf("%s/%d", stagingSk.Path, addr-1)
 	if tempSk.Path != treestore.TokenPath(expectedKey) || err != nil {
 		t.Error("stage json")
 	}
@@ -1118,7 +1118,7 @@ func TestJsonStageStrAsKey(t *testing.T) {
 	}
 
 	tempSk, addr, err := tsc.StageKeyJson(stagingSk, jsonData, JsonStringValuesAsKeys)
-	expectedKey := fmt.Sprintf("%s/%d", stagingSk.Path, addr)
+	expectedKey := fmt.Sprintf("%s/%d", stagingSk.Path, addr-1)
 	if tempSk.Path != treestore.TokenPath(expectedKey) || err != nil {
 		t.Error("stage json")
 	}
@@ -1145,7 +1145,7 @@ func TestJsonStageBytes(t *testing.T) {
 	jsonDataB64 := base64.StdEncoding.EncodeToString(jsonText)
 
 	tempSk, addr, err := tsc.StageKeyJsonBase64(stagingSk, jsonDataB64, 0)
-	expectedKey := fmt.Sprintf("%s/%d", stagingSk.Path, addr)
+	expectedKey := fmt.Sprintf("%s/%d", stagingSk.Path, addr-1)
 	if tempSk.Path != treestore.TokenPath(expectedKey) || err != nil {
 		t.Error("stage json")
 	}
@@ -1179,7 +1179,7 @@ func TestJsonStageBytesStrAsKey(t *testing.T) {
 	jsonDataB64 := base64.StdEncoding.EncodeToString(jsonText)
 
 	tempSk, addr, err := tsc.StageKeyJsonBase64(stagingSk, jsonDataB64, JsonStringValuesAsKeys)
-	expectedKey := fmt.Sprintf("%s/%d", stagingSk.Path, addr)
+	expectedKey := fmt.Sprintf("%s/%d", stagingSk.Path, addr-1)
 	if tempSk.Path != treestore.TokenPath(expectedKey) || err != nil {
 		t.Error("stage json")
 	}
