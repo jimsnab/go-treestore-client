@@ -2189,14 +2189,14 @@ func TestPurge(t *testing.T) {
 	}
 }
 
-func TestCreateIndex(t *testing.T) {
+func TestDefineAutoLinkKey(t *testing.T) {
 	_, tsc := testSetup(t)
 
 	dsk := MakeStoreKey("tree1", "source")
-	isk := MakeStoreKey("tree1-index")
+	isk := MakeStoreKey("tree1-links")
 	vsk := MakeStoreKey("tree1", "source", "123")
 
-	re, ic, err := tsc.CreateIndex(dsk, isk, []SubPath{{}})
+	re, ic, err := tsc.DefineAutoLinkKey(dsk, isk, []SubPath{{}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2215,14 +2215,14 @@ func TestCreateIndex(t *testing.T) {
 	}
 }
 
-func TestDeleteIndex(t *testing.T) {
+func TestRemoveAutoLinkKey(t *testing.T) {
 	_, tsc := testSetup(t)
 
 	dsk := MakeStoreKey("tree1", "source")
-	isk := MakeStoreKey("tree1-index")
+	isk := MakeStoreKey("tree1-links")
 	vsk := MakeStoreKey("tree1", "source", "123")
 
-	re, ic, err := tsc.CreateIndex(dsk, isk, []SubPath{{}})
+	re, ic, err := tsc.DefineAutoLinkKey(dsk, isk, []SubPath{{}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2240,7 +2240,7 @@ func TestDeleteIndex(t *testing.T) {
 		t.Error("link verify")
 	}
 
-	re, ir, err := tsc.DeleteIndex(dsk, isk)
+	re, ir, err := tsc.RemoveAutoLinkKey(dsk, isk)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2257,13 +2257,13 @@ func TestDeleteIndex(t *testing.T) {
 	}
 }
 
-func TestGetIndex(t *testing.T) {
+func TestGetAutoLinkDefinition(t *testing.T) {
 	_, tsc := testSetup(t)
 
 	dsk := MakeStoreKey("tree1", "source")
-	isk := MakeStoreKey("tree1-index")
+	isk := MakeStoreKey("tree1-links")
 
-	re, ic, err := tsc.CreateIndex(dsk, isk, []SubPath{MakeSubPath(`\N`)})
+	re, ic, err := tsc.DefineAutoLinkKey(dsk, isk, []SubPath{MakeSubPath(`\N`)})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2271,20 +2271,20 @@ func TestGetIndex(t *testing.T) {
 		t.Error("not created")
 	}
 
-	defs, err := tsc.GetIndex(dsk)
+	defs, err := tsc.GetAutoLinkDefinition(dsk)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(defs) != 1 {
-		t.Error("index expected")
+		t.Error("autolink expected")
 	}
 
-	if defs[0].IndexSk.Path != isk.Path {
-		t.Error("index key wrong")
+	if defs[0].AutoLinkSk.Path != isk.Path {
+		t.Error("autolink key wrong")
 	}
 
 	subpath := defs[0].Fields[0]
 	if len(subpath) != 1 || subpath[0] != nil {
-		t.Error("index field def wrong")
+		t.Error("autolink field def wrong")
 	}
 }

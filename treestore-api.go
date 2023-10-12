@@ -7,21 +7,21 @@ import (
 )
 
 type (
-	TokenSegment      = treestore.TokenSegment
-	TokenPath         = treestore.TokenPath
-	TokenSet          = treestore.TokenSet
-	StoreKey          = treestore.StoreKey
-	StoreAddress      = treestore.StoreAddress
-	SubPathSegment    = treestore.SubPathSegment
-	EscapedSubPath    = treestore.EscapedSubPath
-	SubPath           = treestore.SubPath
-	SetExFlags        = treestore.SetExFlags
-	RelationshipValue = treestore.RelationshipValue
-	LevelKey          = treestore.LevelKey
-	KeyMatch          = treestore.KeyMatch
-	KeyValueMatch     = treestore.KeyValueMatch
-	JsonOptions       = treestore.JsonOptions
-	IndexDefinition   = treestore.IndexDefinition
+	TokenSegment       = treestore.TokenSegment
+	TokenPath          = treestore.TokenPath
+	TokenSet           = treestore.TokenSet
+	StoreKey           = treestore.StoreKey
+	StoreAddress       = treestore.StoreAddress
+	SubPathSegment     = treestore.SubPathSegment
+	EscapedSubPath     = treestore.EscapedSubPath
+	SubPath            = treestore.SubPath
+	SetExFlags         = treestore.SetExFlags
+	RelationshipValue  = treestore.RelationshipValue
+	LevelKey           = treestore.LevelKey
+	KeyMatch           = treestore.KeyMatch
+	KeyValueMatch      = treestore.KeyValueMatch
+	JsonOptions        = treestore.JsonOptions
+	AutoLinkDefinition = treestore.AutoLinkDefinition
 
 	TSClient interface {
 		// Closes the connection to the TreeStore server, if one is open.
@@ -368,65 +368,59 @@ type (
 		// Discards all data, completely resetting the treestore instance.
 		Purge() (err error)
 
-		// Makes an index definition.
+		// Makes an auto-link definition.
 		//
-		// To use an index, target data must be stored in a specific way:
+		// To use auto-linking, target data must be stored in a specific way:
 		//
-		// * A "record" to be indexed is a key, possibly with child keys. It
-		//	 must have a unique ID. (Key values aren't indexable.)
+		//   * A "record" to be linked is a key, possibly with child keys. It must have
+		//     a unique ID. (Key values aren't linkable.)
 		//
-		// * The path to a record must be stored as <parent>/<unique id>/<record>,
-		//   where <record> is typically a key tree of properites.
+		//   * The path to a record must be stored as <parent>/<unique id>/<record>,
+		//     where <record> is typically a key tree of properites.
 		//
-		// * The `dataParentSk` parameter specifies
-		//   <parent>.
+		//   * The `dataParentSk` parameter specifies <parent>.
 		//
-		// An index is maintained according to `fields`:
+		// An auto-link key is maintained according to `fields`:
 		//
-		// * "fields" combine to be a subpath of the record; an empty subpath for
-		//   the record ID only.
+		//   * A "field" is a subpath of the record; or an empty subpath for the record ID.
 		//
-		// * The index key is constructed as
-		//   <index>/<field>/<field>/...
+		//   * The auto-link key is constructed as <auto-link-key>/<field-value>/<field-value>/...
 		//
-		// * A <field> can be nil to match all segment keys at a particular level.
-		//   One typical use of this is with a JSON array index.
+		//   * When the record key is created, the corresponding auto-link key is
+		//     also created, and relationship 0 holds the address of the record.
 		//
-		// * When the record key is created, the corresponding index key is
-		//	 also created, and relationship 0 holds the address of the record.
-		//
-		// * When the record key is deleted, the corresponding index key is
-		//   also deleted.
+		//   * When the record key is deleted, the corresponding auto-link key is
+		//     also deleted.
 		//
 		// A typical pattern is to stage key creation in a staging key, and then move
-		// the key under `dataParentSk`. The record becomes atomically indexed upon
+		// the key under `dataParentSk`. The record becomes atomically linked upon
 		// that move.
 		//
-		// Using the TreeStore Json APIs works very well with indexes.
+		// Using the TreeStore Json APIs works very well with auto-links.
 		//
-		// Creating an index acquires an exclusive lock of the database. If the data
+		// Creating an auto-link key requires an exclusive lock of the database. If the data
 		// parent key does not exist, it will be created. The operation will be nearly
 		// instant if the data parent key has little to no children. A large number of
-		// records will take some time to index.
+		// records will take some time to link.
 		//
-		// Index entries might point to expired keys. It is handy to use GetRelationshipValue
-		// to determine if the index entry is valid, and to get the key's current value.
+		// Links might point to expired keys. It is handy to use GetRelationshipValue
+		// to determine if the auto-link entry is valid, and to get the key's current value.
 		//
 		// If one of the `fields` can contain multiple children, it is important to
-		// include the record ID at the tail, to avoid overlapping index keys (which
-		// result in incorrect indexing).
-		CreateIndex(dataParentSk, indexSk StoreKey, fields []SubPath) (recordKeyExists, indexCreated bool, err error)
+		// include the record ID at the tail of the field subpath, to avoid overlapping
+		// auto-link keys (which results in loss of links).
+		DefineAutoLinkKey(dataParentSk, autoLinkSk StoreKey, fields []SubPath) (recordKeyExists, autoLinkCreated bool, err error)
 
-		// Removes an index from a store key.
+		// Removes an auto-link definition from a store key.
 		//
-		// See CreateIndex for details on treestore indexes.
+		// See DefineAutoLinkKey for details on treestore auto-links.
 		//
-		// An exclusive lock is held during the removal of the index. If the
-		// index is large, the operation may take some time to delete.
-		DeleteIndex(dataParentSk, indexSk StoreKey) (recordKeyExists, indexRemoved bool, err error)
+		// An exclusive lock is held during the removal of the auto-link definition. If the
+		// number of links are high, the operation may take some time to delete.
+		RemoveAutoLinkKey(dataParentSk, autoLinkSk StoreKey) (recordKeyExists, autoLinkRemoved bool, err error)
 
-		// Returns all indexes defined for the specified data key, or nil if none.
-		GetIndex(dataParentSk StoreKey) (id []IndexDefinition, err error)
+		// Returns all auto-link definitions defined for the specified data key, or nil if none.
+		GetAutoLinkDefinition(dataParentSk StoreKey) (id []AutoLinkDefinition, err error)
 	}
 )
 
